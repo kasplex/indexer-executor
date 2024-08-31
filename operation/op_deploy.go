@@ -54,6 +54,16 @@ func (opMethodDeploy OpMethodDeploy) Do(opData *storage.DataOperationType, state
         opData.OpError = "tick existed"
         return nil
     }
+    if TickIgnored[opData.OpScript.Tick] {
+        opData.OpAccept = -1
+        opData.OpError = "tick ignored"
+        return nil
+    }
+    if (TickReserved[opData.OpScript.Tick] != "" && TickReserved[opData.OpScript.Tick] != opData.OpScript.From) {
+        opData.OpAccept = -1
+        opData.OpError = "tick reserved"
+        return nil
+    }
     if opData.Fee == 0 {
         opData.OpAccept = -1
         opData.OpError = "fee unknown"
@@ -62,11 +72,6 @@ func (opMethodDeploy OpMethodDeploy) Do(opData *storage.DataOperationType, state
     if opData.Fee < opData.FeeLeast {
         opData.OpAccept = -1
         opData.OpError = "fee not enough"
-        return nil
-    }
-    if (TickReserved[opData.OpScript.Tick] != "" && TickReserved[opData.OpScript.Tick] != opData.OpScript.From) {
-        opData.OpAccept = -1
-        opData.OpError = "tick reserved"
         return nil
     }
     if (opData.OpScript.Pre != "0" && !misc.VerifyAddr(opData.OpScript.To, testnet)) {

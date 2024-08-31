@@ -164,7 +164,7 @@ func MakeStLineBalance(key string, stBalance *storage.StateBalanceType) (string)
 func ValidateTick(tick *string) (bool) {
     *tick = strings.ToUpper(*tick)
     lenTick := len(*tick)
-    if (lenTick < 4 || lenTick > 6 || TickIgnored[*tick]) {
+    if (lenTick < 4 || lenTick > 6) {
         return false
     }
     for i := 0; i < lenTick; i++ {
