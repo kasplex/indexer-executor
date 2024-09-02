@@ -95,12 +95,12 @@ func ExecuteBatch(opDataList []storage.DataOperationType, stateMap storage.DataS
     storage.CopyDataStateMap(stateMap, &rollback.StateMapBefore)
     for i := range opDataList {
         opData := &opDataList[i]
+        if opData.DaaScore%100000 <= 9 {
+            checkpointLast = ""
+        }
         err := Method_Registered[opData.OpScript.Op].Do(opData, stateMap, testnet)
         if err != nil {
             return storage.DataRollbackType{}, 0, err
-        }
-        if opData.DaaScore%100000 == 0 {
-            checkpointLast = ""
         }
         if opData.OpAccept == 1 {
             cpHeader := strconv.FormatUint(opData.OpScore,10) +","+ opData.TxId +","+ opData.BlockAccept +","+ opData.OpScript.P +","+ opData.OpScript.Op
