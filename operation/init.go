@@ -99,6 +99,9 @@ func ExecuteBatch(opDataList []storage.DataOperationType, stateMap storage.DataS
         if err != nil {
             return storage.DataRollbackType{}, 0, err
         }
+        if opData.DaaScore%100000 == 0 {
+            checkpointLast = ""
+        }
         if opData.OpAccept == 1 {
             cpHeader := strconv.FormatUint(opData.OpScore,10) +","+ opData.TxId +","+ opData.BlockAccept +","+ opData.OpScript.P +","+ opData.OpScript.Op
             sum := blake2b.Sum256([]byte(cpHeader))
