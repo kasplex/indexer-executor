@@ -95,7 +95,7 @@ func ExecuteBatch(opDataList []storage.DataOperationType, stateMap storage.DataS
     storage.CopyDataStateMap(stateMap, &rollback.StateMapBefore)
     for i := range opDataList {
         opData := &opDataList[i]
-        if opData.DaaScore%100000 <= 9 {
+        if (testnet && opData.DaaScore%100000 <= 9) {
             checkpointLast = ""
         }
         err := Method_Registered[opData.OpScript.Op].Do(opData, stateMap, testnet)
