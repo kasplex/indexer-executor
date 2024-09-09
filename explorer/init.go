@@ -29,7 +29,7 @@ var eRuntime runtimeType
 // Available daaScore range.
 var daaScoreRange = [][2]uint64{
     {83441551, 83525600},
-    {90098008, 18446744073709551615},
+    {90090600, 18446744073709551615},
 }
 
 ////////////////////////////////
