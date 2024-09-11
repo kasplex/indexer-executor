@@ -49,7 +49,7 @@ func Init(ctx context.Context, wg *sync.WaitGroup, cfg config.StartupConfig, tes
     if (!testnet || len(eRuntime.cfg.DaaScoreRange) <= 0) {
         eRuntime.cfg.DaaScoreRange = daaScoreRange
     }
-    if len(eRuntime.cfg.TickReserved) > 0 {
+    if (testnet && len(eRuntime.cfg.TickReserved) > 0) {
         operation.ApplyTickReserved(eRuntime.cfg.TickReserved)
     }
     eRuntime.rollbackList, err = storage.GetRuntimeRollbackLast()
