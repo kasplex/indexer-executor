@@ -41,9 +41,11 @@ func Init(cfgCassa config.CassaConfig, cfgRocks config.RocksConfig) {
         Username: sRuntime.cfgCassa.User,
         Password: sRuntime.cfgCassa.Pass,
     }
-    sRuntime.cassa.SslOpts = &gocql.SslOptions{
-        CaPath: sRuntime.cfgCassa.Crt,
-        EnableHostVerification: false,
+    if sRuntime.cfgCassa.Crt != "" {
+        sRuntime.cassa.SslOpts = &gocql.SslOptions{
+            CaPath: sRuntime.cfgCassa.Crt,
+            EnableHostVerification: false,
+        }
     }
     sRuntime.cassa.Consistency = gocql.LocalQuorum
     sRuntime.cassa.DisableInitialHostLookup = false
