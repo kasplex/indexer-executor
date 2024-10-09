@@ -1,7 +1,5 @@
 # kasplex indexer-executor
 
-***
-
 # 1. Description
 Executor's main responsibilities include but are not limited to:
 
@@ -22,8 +20,6 @@ Executor's main responsibilities include but are not limited to:
 - It employs encryption technologies and security protocols to protect user data, preventing data breaches and tampering.
 
 Through these functionalities, Executor aims to provide users with a highly efficient, accurate, and secure blockchain experience.
-
-***
 
 # 2. Installation
 For installation instructions, please see our [Installation Guide](INSTALLATION.md).

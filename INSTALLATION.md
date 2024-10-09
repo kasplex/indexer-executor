@@ -6,7 +6,6 @@
 ```shell
 sudo apt install -y libsnappy-dev libgflags-dev unzip make build-essential
 ```
-***
 
 ## 2. Install Rocksdb
 
@@ -28,7 +27,6 @@ sudo PORTABLE=1 make shared_lib
 sudo INSTALL_PATH=/usr/lib make install-shared
 ```
 
-***
 
 ## 3. Install Golang
 3.1 Here we recommend that you install the latest version of Golang
@@ -41,8 +39,6 @@ Replace <version> with the desired version number, for example:
 ```shell
 sudo snap install go --channel=<version>
 ```
-
-***
 
 ## 4. Project Initialization
 
@@ -57,8 +53,6 @@ cd indexer-executor
 go get -u && go mod tidy
 go build -o kpexecutor main.go
 ```
-
-***
 
 ## 5. Run Project
 
@@ -91,8 +85,6 @@ go build -o kpexecutor main.go
 ```shell
 sudo ./kpexecutor
 ```
-
-***
 
 ## 6. Configure system services (optional).
 
