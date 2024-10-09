@@ -76,8 +76,8 @@ go build -o kpexecutor main.go
         "port": 9142,                         // connection port
         "user": "",                           // connection user
         "pass": "",                           // connection password
-        "crt": "sf-class2-root.crt",          // file path of db access key 
-        "space": "kpdb01mainnet"              // connection name
+        "crt": "/path/****.crt",              // file path of db access key 
+        "space": ""                           // connection name
     },
     "rocksdb": {                              // This part is the local database parameters.
         "path": "./data"                      // db path
@@ -94,8 +94,6 @@ sudo ./kpexecutor
 
 ***
 
-> **Note:** The following section on configuring system services is optional.
-
 ## 6. Configure system services (optional).
 
 6.1 Create the /etc/systemd/system/kasplex-executor.service file, and set the content as below, remember to replace the correct project path inside.
@@ -104,8 +102,8 @@ sudo ./kpexecutor
 Description=Kasplex Executor Service
 After=network.target
 [Service]
-WorkingDirectory=/{rootpath}
-ExecStart=/{rootpath}/kpexecutor
+WorkingDirectory=/path/to/your/project
+ExecStart=/path/to/your/project/kpexecutor
 Restart=always
 RestartSec=10s
 User=root
