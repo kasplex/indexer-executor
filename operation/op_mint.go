@@ -34,6 +34,10 @@ func (opMethodMint OpMethodMint) Validate(script *storage.DataScriptType, testne
     if script.To == "" {
         script.To = script.From
     }
+    script.Max = ""
+    script.Lim = ""
+    script.Pre = ""
+    script.Dec = ""
     return true
 }
 

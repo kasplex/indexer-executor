@@ -7,6 +7,7 @@ import (
     "sync"
     "strconv"
     "strings"
+    "unicode"
     //"log/slog"
     "encoding/hex"
     "encoding/json"
@@ -288,7 +289,7 @@ func parseOpData(txData *storage.DataTransactionType) (*storage.DataOperationTyp
     if (!eRuntime.testnet && txData.DaaScore <= 83525600) {  // use output[0] as the to-address
         decoded.To = txData.Data.Outputs[0].VerboseData.ScriptPublicKeyAddress
     }
-    if (!ValidateP(&decoded.P) || !ValidateOp(&decoded.Op)) {
+    if (!ValidateP(&decoded.P) || !ValidateOp(&decoded.Op) || !ValidateAscii(&decoded.To)) {
         return nil, nil
     }
     if !operation.Method_Registered[decoded.Op].Validate(&decoded, eRuntime.testnet) {
@@ -389,6 +390,19 @@ func ValidateOp(op *string) (bool) {
     *op = strings.ToLower(*op)
     if !operation.Op_Registered[*op] {
         return false
+    }
+    return true
+}
+
+////////////////////////////////
+func ValidateAscii(s *string) (bool) {
+    if *s == "" {
+        return true
+    }
+    for _, c := range *s {
+        if c > unicode.MaxASCII {
+            return false
+        }
     }
     return true
 }

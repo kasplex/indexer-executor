@@ -30,6 +30,10 @@ func (opMethodTransfer OpMethodTransfer) Validate(script *storage.DataScriptType
     if (script.From == "" || script.To == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateAmount(&script.Amt)) {
         return false
     }
+    script.Max = ""
+    script.Lim = ""
+    script.Pre = ""
+    script.Dec = ""
     return true
 }
 

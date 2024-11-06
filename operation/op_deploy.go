@@ -35,6 +35,7 @@ func (opMethodDeploy OpMethodDeploy) Validate(script *storage.DataScriptType, te
     if script.To == "" {
         script.To = script.From
     }
+    script.Amt = ""
     return true
 }
 
