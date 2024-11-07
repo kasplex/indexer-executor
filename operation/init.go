@@ -7,7 +7,7 @@ import (
     "time"
     "strconv"
     "strings"
-    //"log/slog"
+    "log/slog"
     "math/big"
     "golang.org/x/crypto/blake2b"
     "kasplex-executor/storage"
@@ -15,11 +15,13 @@ import (
 
 ////////////////////////////////
 type OpMethod interface {
-    Validate(*storage.DataScriptType, bool) (bool)
+    ScriptCollectEx(int, *storage.DataScriptType, *storage.DataTransactionType, bool)
+    Validate(*storage.DataScriptType, uint64, bool) (bool)
     FeeLeast(uint64) (uint64)
-    PrepareStateKey(*storage.DataOperationType, storage.DataStateMapType)
-    Do(*storage.DataOperationType, storage.DataStateMapType, bool) (error)
-    UnDo() (error)
+    //PrepareStateKey(*storage.DataOperationType, storage.DataStateMapType)
+    PrepareStateKey(*storage.DataScriptType, storage.DataStateMapType)
+    Do(int, *storage.DataOperationType, storage.DataStateMapType, bool) (error)
+    //UnDo() (error)
     // ...
 }
 
@@ -27,6 +29,7 @@ type OpMethod interface {
 var P_Registered = map[string]bool{}
 var Op_Registered = map[string]bool{}
 var Method_Registered = map[string]OpMethod{}
+var OpRecycle_Registered = map[string]bool{}
 
 ////////////////////////////////
 var TickIgnored = map[string]bool{
@@ -81,16 +84,30 @@ func PrepareStateBatch(opDataList []storage.DataOperationType) (storage.DataStat
     stateMap := storage.DataStateMapType{
         StateTokenMap: make(map[string]*storage.StateTokenType),
         StateBalanceMap: make(map[string]*storage.StateBalanceType),
+        StateMarketMap: make(map[string]*storage.StateMarketType),
         // StateXxx ...
     }
     for _, opData := range opDataList{
-        Method_Registered[opData.OpScript.Op].PrepareStateKey(&opData, stateMap)
+        //Method_Registered[opData.OpScript.Op].PrepareStateKey(&opData, stateMap)
+        for _, opScript := range opData.OpScript{
+        
+slog.Info("PrepareStateBatch", "opScript", opScript)
+        
+            Method_Registered[opScript.Op].PrepareStateKey(opScript, stateMap)
+        }
     }
+    
+slog.Info("PrepareStateBatch", "StateTokenMap", stateMap.StateTokenMap, "StateBalanceMap", stateMap.StateBalanceMap, "StateMarketMap", stateMap.StateMarketMap)
+    
     _, err := storage.GetStateTokenMap(stateMap.StateTokenMap)
     if err != nil {
         return storage.DataStateMapType{}, 0, err
     }
     _, err = storage.GetStateBalanceMap(stateMap.StateBalanceMap)
+    if err != nil {
+        return storage.DataStateMapType{}, 0, err
+    }
+    _, err = storage.GetStateMarketMap(stateMap.StateMarketMap)
     if err != nil {
         return storage.DataStateMapType{}, 0, err
     }
@@ -115,12 +132,44 @@ func ExecuteBatch(opDataList []storage.DataOperationType, stateMap storage.DataS
         if (testnet && opData.DaaScore%100000 <= 9) {
             checkpointLast = ""
         }
-        err := Method_Registered[opData.OpScript.Op].Do(opData, stateMap, testnet)
-        if err != nil {
-            return storage.DataRollbackType{}, 0, err
+        //err := Method_Registered[opData.OpScript.Op].Do(opData, stateMap, testnet)
+        iScriptAccept := -1
+        opError := ""
+        for iScript, opScript := range opData.OpScript{
+            opData.OpAccept = 0
+            opData.OpError = ""
+            
+slog.Info("ExecuteBatch sub before.", "opData", opData, "opScript", opScript, "StateTokenMap", stateMap.StateTokenMap, "StateBalanceMap", stateMap.StateBalanceMap, "StateMarketMap", stateMap.StateMarketMap)
+            
+            err := Method_Registered[opScript.Op].Do(iScript, opData, stateMap, testnet)
+            
+slog.Info("ExecuteBatch sub after.", "opData", opData, "opScript", opScript, "StateTokenMap", stateMap.StateTokenMap, "StateBalanceMap", stateMap.StateBalanceMap, "StateMarketMap", stateMap.StateMarketMap)
+            
+            if err != nil {
+                return storage.DataRollbackType{}, 0, err
+            }
+            if (opData.OpAccept == 1 && iScriptAccept < 0) {
+                iScriptAccept = iScript
+            }
+            if (opData.OpAccept == -1 && opError == "") {
+                opError = opData.OpError
+            }
         }
+        if iScriptAccept >= 0 {
+            opData.OpAccept = 1
+            opData.OpError = ""
+            if iScriptAccept > 0 {
+                opData.OpScript = opData.OpScript[iScriptAccept:]
+            }
+        } else {
+            opData.OpAccept = -1
+            opData.OpError = opError
+        }
+            
+slog.Info("ExecuteBatch total after.", "opData", opData, "StateTokenMap", stateMap.StateTokenMap, "StateBalanceMap", stateMap.StateBalanceMap, "StateMarketMap", stateMap.StateMarketMap)
+            
         if opData.OpAccept == 1 {
-            cpHeader := strconv.FormatUint(opData.OpScore,10) +","+ opData.TxId +","+ opData.BlockAccept +","+ opData.OpScript.P +","+ opData.OpScript.Op
+            cpHeader := strconv.FormatUint(opData.OpScore,10) +","+ opData.TxId +","+ opData.BlockAccept +","+ opData.OpScript[0].P +","+ opData.OpScript[0].Op
             sum := blake2b.Sum256([]byte(cpHeader))
             cpHeader = fmt.Sprintf("%064x", string(sum[:]))
             cpState := strings.Join(opData.StAfter, ";")
@@ -163,6 +212,25 @@ func MakeStLineToken(key string, stToken *storage.StateTokenType, isDeploy bool)
     stLine += strOpscore
     return stLine
 }
+func AppendStLineToken(stLine []string, key string, stToken *storage.StateTokenType, isDeploy bool, isAfter bool) ([]string) {
+    keyFull := storage.KeyPrefixStateToken + key
+    iExists := -1
+    list := []string{}
+    for i, line := range stLine {
+        list = strings.SplitN(line, ",", 2)
+        if list[0] == keyFull {
+            iExists = i
+            break
+        }
+    }
+    if iExists < 0 {
+        return append(stLine, MakeStLineToken(key, stToken, isDeploy))
+    }
+    if isAfter {
+        stLine[iExists] = MakeStLineToken(key, stToken, isDeploy)
+    }
+    return stLine
+}
 
 ////////////////////////////////
 func MakeStLineBalance(key string, stBalance *storage.StateBalanceType) (string) {
@@ -178,6 +246,99 @@ func MakeStLineBalance(key string, stBalance *storage.StateBalanceType) (string)
     stLine += stBalance.Locked + ","
     stLine += strOpscore
     return stLine
+}
+func AppendStLineBalance(stLine []string, key string, stBalance *storage.StateBalanceType, isAfter bool) ([]string) {
+    keyFull := storage.KeyPrefixStateBalance + key
+    iExists := -1
+    list := []string{}
+    for i, line := range stLine {
+        list = strings.SplitN(line, ",", 2)
+        if list[0] == keyFull {
+            iExists = i
+            break
+        }
+    }
+    if iExists < 0 {
+        return append(stLine, MakeStLineBalance(key, stBalance))
+    }
+    if isAfter {
+        stLine[iExists] = MakeStLineBalance(key, stBalance)
+    }
+    return stLine
+}
+
+////////////////////////////////
+func MakeStLineMarket(key string, stMarket *storage.StateMarketType) (string) {
+    stLine := storage.KeyPrefixStateMarket + key
+    if stMarket == nil {
+        return stLine
+    }
+    stLine += ","
+    strOpscore := strconv.FormatUint(stMarket.OpAdd, 10)
+    stLine += stMarket.UAddr + ","
+    stLine += stMarket.UAmt + ","
+    stLine += stMarket.TAmt + ","
+    stLine += strOpscore
+    return stLine
+}
+func AppendStLineMarket(stLine []string, key string, stMarket *storage.StateMarketType, isAfter bool) ([]string) {
+    keyFull := storage.KeyPrefixStateMarket + key
+    iExists := -1
+    list := []string{}
+    for i, line := range stLine {
+        list = strings.SplitN(line, ",", 2)
+        if list[0] == keyFull {
+            iExists = i
+            break
+        }
+    }
+    if iExists < 0 {
+        return append(stLine, MakeStLineMarket(key, stMarket))
+    }
+    if isAfter {
+        stLine[iExists] = MakeStLineMarket(key, stMarket)
+    }
+    return stLine
+}
+
+////////////////////////////////
+func AppendSsInfoTickAffc(tickAffc []string, key string, value int64) ([]string) {
+    iExists := -1
+    valueBefore := int64(0)
+    list := []string{}
+    for i, affc := range tickAffc {
+        list = strings.SplitN(affc, "=", 2)
+        if list[0] == key {
+            iExists = i
+            if len(list) > 1 {
+                valueBefore, _ = strconv.ParseInt(list[1], 10, 64)
+            }
+            break
+        }
+    }
+    if iExists < 0 {
+        return append(tickAffc, key+"="+strconv.FormatInt(value, 10))
+    }
+    tickAffc[iExists] = key+"="+strconv.FormatInt(value+valueBefore, 10)
+    return tickAffc
+}
+
+////////////////////////////////
+func AppendSsInfoAddressAffc(addressAffc []string, key string, value string) ([]string) {
+    iExists := -1
+    list := []string{}
+    for i, affc := range addressAffc {
+        list = strings.SplitN(affc, "=", 2)
+        if list[0] == key {
+            iExists = i
+            break
+        }
+    }
+    if iExists < 0 {
+        return append(addressAffc, key+"="+value)
+    }
+    addressAffc[iExists] = key+"="+value
+    return addressAffc
 }
 
 ////////////////////////////////

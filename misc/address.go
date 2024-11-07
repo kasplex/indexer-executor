@@ -11,10 +11,10 @@ import (
 
 ////////////////////////////////
 // Convert the public key list to script hash of multisig.
-func ConvKPubListToScriptHashMultisig(m int64, kPubList []string, n int64) (string) {
+func ConvKPubListToScriptHashMultisig(m int64, kPubList []string, n int64) (string, string) {
     lenKPubList := len(kPubList)
     if (lenKPubList < 1 || lenKPubList != int(n)) {
-        return ""
+        return "", ""
     }
     ecdsa := false
     kPub := strconv.FormatInt(m+80, 16)
@@ -26,7 +26,7 @@ func ConvKPubListToScriptHashMultisig(m int64, kPubList []string, n int64) (stri
             kPub += "21"
             ecdsa = true
         } else {
-            return ""
+            return "", ""
         }
         kPub += k
     }
@@ -38,7 +38,7 @@ func ConvKPubListToScriptHashMultisig(m int64, kPubList []string, n int64) (stri
     }
     decoded, _ := hex.DecodeString(kPub)
     sum := blake2b.Sum256(decoded)
-    return fmt.Sprintf("%064x", string(sum[:]))
+    return fmt.Sprintf("%064x", string(sum[:])), kPub
 }
 
 ////////////////////////////////
@@ -119,6 +119,39 @@ func VerifyAddr(addr string, testnet bool) (bool) {
         return false
     }
     return true
+}
+
+////////////////////////////////
+// Make the hex data of script.
+func MakeScriptHex(data string) (string) {
+    hexData := ""
+    lenData := len(data)
+    if lenData <= 0 {
+        return "00"
+    } else if lenData <= 75 {
+        hexData = fmt.Sprintf("%02x", lenData)
+    } else if lenData <= 255 {
+        hexData = "4c" + fmt.Sprintf("%02x", lenData)
+    } else {
+        hexData = "4d" + fmt.Sprintf("%04x", lenData)
+    }
+    hexData += hex.EncodeToString([]byte(data))
+    return hexData
+}
+
+////////////////////////////////
+// Make the script with the protocol.
+func MakeP2shKasplex(scriptSig string, scriptPn string, strJson string, testnet bool) (string, string) {
+    scriptJson := "00" + MakeScriptHex(strJson)
+    script := scriptSig
+    script += "0063076b6173706c6578"
+    script += scriptPn
+    script += scriptJson
+    script += "68"
+    bin, _ := hex.DecodeString(script)
+    sum := blake2b.Sum256(bin)
+    scriptHash := fmt.Sprintf("%064x", string(sum[:]))
+    return ConvKPubToP2sh(scriptHash, testnet), script
 }
 
 ////////////////////////////////

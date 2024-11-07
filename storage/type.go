@@ -33,6 +33,8 @@ type DataScriptType struct {
     Pre string `json:"pre,omitempty"`
     Dec string `json:"dec,omitempty"`
     Amt string `json:"amt,omitempty"`
+    Utxo string `json:"utxo,omitempty"`
+    Price string `json:"price,omitempty"`
     // ...
 }
 
@@ -66,7 +68,10 @@ type DataOperationType struct {
     OpScore uint64
     OpAccept int8
     OpError string
-    OpScript *DataScriptType
+    //OpScript *DataScriptType
+    OpScript []*DataScriptType
+    //OpScriptRecycle []*DataScriptType
+    ScriptSig string
     StBefore []string
     StAfter []string
     Checkpoint string
@@ -114,9 +119,25 @@ type StateBalanceType struct {
 }
 
 ////////////////////////////////
+type StateMarketType struct {
+    Tick string `json:"tick,omitempty"`
+    TAddr string `json:"taddr,omitempty"`
+    UTxId string `json:"utxid,omitempty"`
+    UAddr string `json:"uaddr,omitempty"`
+    UAmt string `json:"uamt,omitempty"`
+    UScript string `json:"uscript,omitempty"`
+    TAmt string `json:"tamt,omitempty"`
+    OpAdd uint64 `json:"opadd,omitempty"`
+}
+
+////////////////////////////////
+// type StateXxx ...
+
+////////////////////////////////
 type DataStateMapType struct {
     StateTokenMap map[string]*StateTokenType `json:"statetokenmap,omitempty"`
     StateBalanceMap map[string]*StateBalanceType `json:"statebalancemap,omitempty"`
+    StateMarketMap map[string]*StateMarketType `json:"statemarketmap,omitempty"`
     // StateXxx ...
 }
 
