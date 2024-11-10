@@ -45,7 +45,6 @@ func (opMethodDeploy OpMethodDeploy) Validate(script *storage.DataScriptType, da
 }
 
 ////////////////////////////////
-//func (opMethodDeploy OpMethodDeploy) PrepareStateKey(opData *storage.DataOperationType, stateMap storage.DataStateMapType) {
 func (opMethodDeploy OpMethodDeploy) PrepareStateKey(opScript *storage.DataScriptType, stateMap storage.DataStateMapType) {
     stateMap.StateTokenMap[opScript.Tick] = nil
     if opScript.Pre != "0" {
@@ -93,12 +92,8 @@ func (opMethodDeploy OpMethodDeploy) Do(index int, opData *storage.DataOperation
     stBalance := stateMap.StateBalanceMap[keyBalance]
     ////////////////////////////////
     opData.StBefore = nil
-    //stLine := MakeStLineToken(opScript.Tick, stToken, true)
-    //opData.StBefore = append(opData.StBefore, stLine)
     opData.StBefore = AppendStLineToken(opData.StBefore, opScript.Tick, stToken, true, false)
     if opScript.Pre != "0" {
-        //stLine = MakeStLineBalance(keyBalance, stBalance)
-        //opData.StBefore = append(opData.StBefore, stLine)
         opData.StBefore = AppendStLineBalance(opData.StBefore, keyBalance, stBalance, false)
     }
     ////////////////////////////////
@@ -140,23 +135,16 @@ func (opMethodDeploy OpMethodDeploy) Do(index int, opData *storage.DataOperation
         }
         stateMap.StateBalanceMap[keyBalance] = stBalance
         ////////////////////////////
-        //opData.SsInfo.TickAffc = append(opData.SsInfo.TickAffc, opScript.Tick+"=1")
         opData.SsInfo.TickAffc = AppendSsInfoTickAffc(opData.SsInfo.TickAffc, opScript.Tick, 1)
-        //opData.SsInfo.AddressAffc = append(opData.SsInfo.AddressAffc, opScript.To+"_"+opScript.Tick+"="+minted)
         opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, opScript.To+"_"+opScript.Tick, minted)
     } else {
         ////////////////////////////
-        //opData.SsInfo.TickAffc = append(opData.SsInfo.TickAffc, opScript.Tick+"=0")
         opData.SsInfo.TickAffc = AppendSsInfoTickAffc(opData.SsInfo.TickAffc, opScript.Tick, 0)
     }
     ////////////////////////////////
     opData.StAfter = nil
-    //stLine = MakeStLineToken(opScript.Tick, stToken, true)
-    //opData.StAfter = append(opData.StAfter, stLine)
     opData.StAfter = AppendStLineToken(opData.StAfter, opScript.Tick, stToken, true, true)
     if opScript.Pre != "0" {
-        //stLine = MakeStLineBalance(keyBalance, stBalance)
-        //opData.StAfter = append(opData.StAfter, stLine)
         opData.StAfter = AppendStLineBalance(opData.StAfter, keyBalance, stBalance, true)
     }
     ////////////////////////////////

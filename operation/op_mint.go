@@ -47,7 +47,6 @@ func (opMethodMint OpMethodMint) Validate(script *storage.DataScriptType, daaSco
 }
 
 ////////////////////////////////
-//func (opMethodMint OpMethodMint) PrepareStateKey(opData *storage.DataOperationType, stateMap storage.DataStateMapType) {
 func (opMethodMint OpMethodMint) PrepareStateKey(opScript *storage.DataScriptType, stateMap storage.DataStateMapType) {
     stateMap.StateTokenMap[opScript.Tick] = nil
     stateMap.StateBalanceMap[opScript.To+"_"+opScript.Tick] = nil
@@ -105,11 +104,7 @@ func (opMethodMint OpMethodMint) Do(index int, opData *storage.DataOperationType
     minted := mintedBig.Text(10)
     ////////////////////////////////
     opData.StBefore = nil
-    //stLine := MakeStLineToken(opScript.Tick, stToken, false)
-    //opData.StBefore = append(opData.StBefore, stLine)
     opData.StBefore = AppendStLineToken(opData.StBefore, opScript.Tick, stToken, false, false)
-    //stLine = MakeStLineBalance(keyBalance, stBalance)
-    //opData.StBefore = append(opData.StBefore, stLine)
     opData.StBefore = AppendStLineBalance(opData.StBefore, keyBalance, stBalance, false)
     ////////////////////////////////
     stToken.Minted = minted
@@ -126,11 +121,9 @@ func (opMethodMint OpMethodMint) Do(index int, opData *storage.DataOperationType
         }
         stateMap.StateBalanceMap[keyBalance] = stBalance
         ////////////////////////////
-        //opData.SsInfo.TickAffc = append(opData.SsInfo.TickAffc, opScript.Tick+"=1")
         opData.SsInfo.TickAffc = AppendSsInfoTickAffc(opData.SsInfo.TickAffc, opScript.Tick, 1)
     } else {
         ////////////////////////////
-        //opData.SsInfo.TickAffc = append(opData.SsInfo.TickAffc, opScript.Tick+"=0")
         opData.SsInfo.TickAffc = AppendSsInfoTickAffc(opData.SsInfo.TickAffc, opScript.Tick, 0)
     }
     mintedBig.SetString(stBalance.Balance, 10)
@@ -142,15 +135,10 @@ func (opMethodMint OpMethodMint) Do(index int, opData *storage.DataOperationType
     lockedBig.SetString(stBalance.Locked, 10)
     mintedBig = mintedBig.Add(mintedBig, lockedBig)
     balanceTotal := mintedBig.Text(10)
-    //opData.SsInfo.AddressAffc = append(opData.SsInfo.AddressAffc, opScript.To+"_"+opScript.Tick+"="+balanceTotal)
     opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, opScript.To+"_"+opScript.Tick, balanceTotal)
     ////////////////////////////////
     opData.StAfter = nil
-    //stLine = MakeStLineToken(opScript.Tick, stToken, false)
-    //opData.StAfter = append(opData.StAfter, stLine)
     opData.StAfter = AppendStLineToken(opData.StAfter, opScript.Tick, stToken, false, true)
-    //stLine = MakeStLineBalance(keyBalance, stBalance)
-    //opData.StAfter = append(opData.StAfter, stLine)
     opData.StAfter = AppendStLineBalance(opData.StAfter, keyBalance, stBalance, true)
     ////////////////////////////////
     opData.OpAccept = 1

@@ -7,7 +7,7 @@ import (
     "time"
     "strconv"
     "strings"
-    "log/slog"
+    //"log/slog"
     "math/big"
     "golang.org/x/crypto/blake2b"
     "kasplex-executor/storage"
@@ -18,7 +18,6 @@ type OpMethod interface {
     ScriptCollectEx(int, *storage.DataScriptType, *storage.DataTransactionType, bool)
     Validate(*storage.DataScriptType, uint64, bool) (bool)
     FeeLeast(uint64) (uint64)
-    //PrepareStateKey(*storage.DataOperationType, storage.DataStateMapType)
     PrepareStateKey(*storage.DataScriptType, storage.DataStateMapType)
     Do(int, *storage.DataOperationType, storage.DataStateMapType, bool) (error)
     //UnDo() (error)
@@ -88,17 +87,10 @@ func PrepareStateBatch(opDataList []storage.DataOperationType) (storage.DataStat
         // StateXxx ...
     }
     for _, opData := range opDataList{
-        //Method_Registered[opData.OpScript.Op].PrepareStateKey(&opData, stateMap)
         for _, opScript := range opData.OpScript{
-        
-slog.Info("PrepareStateBatch", "opScript", opScript)
-        
             Method_Registered[opScript.Op].PrepareStateKey(opScript, stateMap)
         }
     }
-    
-slog.Info("PrepareStateBatch", "StateTokenMap", stateMap.StateTokenMap, "StateBalanceMap", stateMap.StateBalanceMap, "StateMarketMap", stateMap.StateMarketMap)
-    
     _, err := storage.GetStateTokenMap(stateMap.StateTokenMap)
     if err != nil {
         return storage.DataStateMapType{}, 0, err
@@ -132,19 +124,12 @@ func ExecuteBatch(opDataList []storage.DataOperationType, stateMap storage.DataS
         if (testnet && opData.DaaScore%100000 <= 9) {
             checkpointLast = ""
         }
-        //err := Method_Registered[opData.OpScript.Op].Do(opData, stateMap, testnet)
         iScriptAccept := -1
         opError := ""
         for iScript, opScript := range opData.OpScript{
             opData.OpAccept = 0
             opData.OpError = ""
-            
-slog.Info("ExecuteBatch sub before.", "opData", opData, "opScript", opScript, "StateTokenMap", stateMap.StateTokenMap, "StateBalanceMap", stateMap.StateBalanceMap, "StateMarketMap", stateMap.StateMarketMap)
-            
             err := Method_Registered[opScript.Op].Do(iScript, opData, stateMap, testnet)
-            
-slog.Info("ExecuteBatch sub after.", "opData", opData, "opScript", opScript, "StateTokenMap", stateMap.StateTokenMap, "StateBalanceMap", stateMap.StateBalanceMap, "StateMarketMap", stateMap.StateMarketMap)
-            
             if err != nil {
                 return storage.DataRollbackType{}, 0, err
             }
@@ -165,9 +150,6 @@ slog.Info("ExecuteBatch sub after.", "opData", opData, "opScript", opScript, "St
             opData.OpAccept = -1
             opData.OpError = opError
         }
-            
-slog.Info("ExecuteBatch total after.", "opData", opData, "StateTokenMap", stateMap.StateTokenMap, "StateBalanceMap", stateMap.StateBalanceMap, "StateMarketMap", stateMap.StateMarketMap)
-            
         if opData.OpAccept == 1 {
             cpHeader := strconv.FormatUint(opData.OpScore,10) +","+ opData.TxId +","+ opData.BlockAccept +","+ opData.OpScript[0].P +","+ opData.OpScript[0].Op
             sum := blake2b.Sum256([]byte(cpHeader))

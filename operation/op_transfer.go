@@ -43,7 +43,6 @@ func (opMethodTransfer OpMethodTransfer) Validate(script *storage.DataScriptType
 }
 
 ////////////////////////////////
-//func (opMethodTransfer OpMethodTransfer) PrepareStateKey(opData *storage.DataOperationType, stateMap storage.DataStateMapType) {
 func (opMethodTransfer OpMethodTransfer) PrepareStateKey(opScript *storage.DataScriptType, stateMap storage.DataStateMapType) {
     stateMap.StateTokenMap[opScript.Tick] = nil
     stateMap.StateBalanceMap[opScript.From+"_"+opScript.Tick] = nil
@@ -89,11 +88,7 @@ func (opMethodTransfer OpMethodTransfer) Do(index int, opData *storage.DataOpera
     }
     ////////////////////////////////
     opData.StBefore = nil
-    //stLine := MakeStLineBalance(keyBalanceFrom, stBalanceFrom)
-    //opData.StBefore = append(opData.StBefore, stLine)
     opData.StBefore = AppendStLineBalance(opData.StBefore, keyBalanceFrom, stBalanceFrom, false)
-    //stLine = MakeStLineBalance(keyBalanceTo, stBalanceTo)
-    //opData.StBefore = append(opData.StBefore, stLine)
     opData.StBefore = AppendStLineBalance(opData.StBefore, keyBalanceTo, stBalanceTo, false)
     ////////////////////////////////
     balanceBig = balanceBig.Sub(balanceBig, amtBig)
@@ -123,19 +118,12 @@ func (opMethodTransfer OpMethodTransfer) Do(index int, opData *storage.DataOpera
     balanceBig = balanceBig.Add(balanceBig, lockedBig)
     balanceToTotal := balanceBig.Text(10)
     ////////////////////////////////
-    //opData.SsInfo.TickAffc = append(opData.SsInfo.TickAffc, opScript.Tick+"="+strconv.Itoa(nTickAffc))
     opData.SsInfo.TickAffc = AppendSsInfoTickAffc(opData.SsInfo.TickAffc, opScript.Tick, nTickAffc)
-    //opData.SsInfo.AddressAffc = append(opData.SsInfo.AddressAffc, opScript.From+"_"+opScript.Tick+"="+balanceFromTotal)
     opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, opScript.From+"_"+opScript.Tick, balanceFromTotal)
-    //opData.SsInfo.AddressAffc = append(opData.SsInfo.AddressAffc, opScript.To+"_"+opScript.Tick+"="+balanceToTotal)
     opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, opScript.To+"_"+opScript.Tick, balanceToTotal)
     ////////////////////////////////
     opData.StAfter = nil
-    //stLine = MakeStLineBalance(keyBalanceFrom, stBalanceFrom)
-    //opData.StAfter = append(opData.StAfter, stLine)
     opData.StAfter = AppendStLineBalance(opData.StAfter, keyBalanceFrom, stBalanceFrom, true)
-    //stLine = MakeStLineBalance(keyBalanceTo, stBalanceTo)
-    //opData.StAfter = append(opData.StAfter, stLine)
     opData.StAfter = AppendStLineBalance(opData.StAfter, keyBalanceTo, stBalanceTo, true)
     ////////////////////////////////
     if (stBalanceFrom.Balance == "0" && stBalanceFrom.Locked == "0") {

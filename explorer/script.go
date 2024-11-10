@@ -8,7 +8,7 @@ import (
     "strconv"
     "strings"
     "unicode"
-    "log/slog"
+    //"log/slog"
     "encoding/hex"
     "encoding/json"
     "kasplex-executor/misc"
@@ -276,9 +276,6 @@ func parseOpData(txData *storage.DataTransactionType) (*storage.DataOperationTyp
         return nil, nil
     }
     var opScript []*storage.DataScriptType
-    //var decoded0 *storage.DataScriptType
-    //var decodedRecycle []*storage.DataScriptType
-    //utxoRecycle := false
     scriptSig := ""
     for i, input := range txData.Data.Inputs {
         script := input.SignatureScript
@@ -291,9 +288,6 @@ func parseOpData(txData *storage.DataTransactionType) (*storage.DataOperationTyp
         if err != nil {
             continue
         }
-    
-slog.Info("parseOpData 0.", "decoded", decoded)
-
         decoded.From = scriptInfo[0]
         if (!eRuntime.testnet && txData.DaaScore <= 83525600 && len(txData.Data.Outputs) > 0) {  // use output[0]
             decoded.To = txData.Data.Outputs[0].VerboseData.ScriptPublicKeyAddress
@@ -301,13 +295,7 @@ slog.Info("parseOpData 0.", "decoded", decoded)
         if (!ValidateP(&decoded.P) || !ValidateOp(&decoded.Op) || !ValidateAscii(&decoded.To)) {
             continue
         }
-    
-slog.Info("parseOpData 1.", "decoded", decoded)
-
         operation.Method_Registered[decoded.Op].ScriptCollectEx(i, &decoded, txData, eRuntime.testnet)
-    
-slog.Info("parseOpData 2.", "decoded", decoded)
-
         if !operation.Method_Registered[decoded.Op].Validate(&decoded, txData.DaaScore, eRuntime.testnet) {
             continue
         }
@@ -315,56 +303,13 @@ slog.Info("parseOpData 2.", "decoded", decoded)
             //decoded0 = &decoded
             opScript = append(opScript, &decoded)
             scriptSig = scriptInfo[4]
-    
-slog.Info("parseOpData 3a.", "decoded", decoded)
-
             continue
         }
         if !operation.OpRecycle_Registered[decoded.Op] {
             continue
         }
         opScript = append(opScript, &decoded)
-    
-slog.Info("parseOpData 3b.", "decoded", decoded)
-
-        /*if decode0 == nil {
-            decoded0 = &decoded
-        } else {
-            decodedRecycle = append(decodedRecycle, &decoded)
-        }*/
     }
-    
-    // ...
-    
-    /*script := txData.Data.Inputs[0].SignatureScript
-    isOp, scriptInfo := parseScriptInput(script)
-    if !isOp {
-        return nil, nil
-    }
-    if scriptInfo[0] == "" {
-        return nil, nil
-    }
-    decoded := storage.DataScriptType{}
-    err := json.Unmarshal([]byte(scriptInfo[1]), &decoded)
-    if err != nil {
-        return nil, nil
-    }
-    if (!ValidateP(&decoded.P) || !ValidateOp(&decoded.Op)) {
-        return nil, nil
-    }
-    decoded.From = scriptInfo[0]
-    
-    // ...
-    
-    if (!eRuntime.testnet && txData.DaaScore <= 83525600 && len(txData.Data.Outputs) > 0) {  // use output[0] as the to-address
-        decoded.To = txData.Data.Outputs[0].VerboseData.ScriptPublicKeyAddress
-    }
-    operation.Method_Registered[decoded.Op].ScriptCollectEx(&decoded, txData, eRuntime.testnet)
-    if !operation.Method_Registered[decoded.Op].Validate(&decoded, txData.DaaScore, eRuntime.testnet) {
-        return nil, nil
-    }*/
-    
-    //if (decode0 == nil && len(decodedRecycle) <= 0) {
     if len(opScript) <= 0 {
         return nil, nil
     }
@@ -373,15 +318,10 @@ slog.Info("parseOpData 3b.", "decoded", decoded)
         DaaScore: txData.DaaScore,
         BlockAccept: txData.BlockAccept,
         MtsAdd: int64(txData.Data.VerboseData.BlockTime),
-        //OpScript: decoded0,
         OpScript: opScript,
-        //OpScriptRecycle: decodedRecycle,
         ScriptSig: scriptSig,
         SsInfo: &storage.DataStatsType{},
     }
-    
-slog.Info("parseOpData", "opData", opData)
-
     return opData, nil
 }
 

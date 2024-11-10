@@ -68,9 +68,7 @@ type DataOperationType struct {
     OpScore uint64
     OpAccept int8
     OpError string
-    //OpScript *DataScriptType
     OpScript []*DataScriptType
-    //OpScriptRecycle []*DataScriptType
     ScriptSig string
     StBefore []string
     StAfter []string

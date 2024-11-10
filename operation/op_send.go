@@ -59,7 +59,6 @@ func (opMethodSend OpMethodSend) Validate(script *storage.DataScriptType, daaSco
 }
 
 ////////////////////////////////
-//func (opMethodSend OpMethodSend) PrepareStateKey(opData *storage.DataOperationType, stateMap storage.DataStateMapType) {
 func (opMethodSend OpMethodSend) PrepareStateKey(opScript *storage.DataScriptType, stateMap storage.DataStateMapType) {
     stateMap.StateTokenMap[opScript.Tick] = nil
     stateMap.StateBalanceMap[opScript.From+"_"+opScript.Tick] = nil
@@ -108,17 +107,10 @@ func (opMethodSend OpMethodSend) Do(index int, opData *storage.DataOperationType
         return nil
     }
     ////////////////////////////////
-    //opData.StBefore = nil
-    //stLine := MakeStLineBalance(keyBalanceFrom, stBalanceFrom)
-    //opData.StBefore = append(opData.StBefore, stLine)
     opData.StBefore = AppendStLineBalance(opData.StBefore, keyBalanceFrom, stBalanceFrom, false)
     if keyBalanceFrom != keyBalanceTo {
-        //stLine = MakeStLineBalance(keyBalanceTo, stBalanceTo)
-        //opData.StBefore = append(opData.StBefore, stLine)
         opData.StBefore = AppendStLineBalance(opData.StBefore, keyBalanceTo, stBalanceTo, false)
     }
-    //stLine = MakeStLineMarket(keyMarket, stMarket)
-    //opData.StBefore = append(opData.StBefore, stLine)
     opData.StBefore = AppendStLineMarket(opData.StBefore, keyMarket, stMarket, false)
     ////////////////////////////////
     if stBalanceTo == nil {
@@ -144,29 +136,19 @@ func (opMethodSend OpMethodSend) Do(index int, opData *storage.DataOperationType
     }
     stateMap.StateMarketMap[keyMarket] = nil
     ////////////////////////////////
-    //opData.SsInfo.TickAffc = append(opData.SsInfo.TickAffc, opScript.Tick+"="+strconv.Itoa(nTickAffc))
     opData.SsInfo.TickAffc = AppendSsInfoTickAffc(opData.SsInfo.TickAffc, opScript.Tick, nTickAffc)
     balanceBig.SetString(stBalanceFrom.Balance, 10)
     balanceBig = balanceBig.Add(balanceBig, lockedBig)
-    //opData.SsInfo.AddressAffc = append(opData.SsInfo.AddressAffc, opScript.From+"_"+opScript.Tick+"="+balanceBig.Text(10))
     opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, opScript.From+"_"+opScript.Tick, balanceBig.Text(10))
     if keyBalanceFrom != keyBalanceTo {
         balanceBig.SetString(stBalanceTo.Balance, 10)
         lockedBig.SetString(stBalanceTo.Locked, 10)
         balanceBig = balanceBig.Add(balanceBig, lockedBig)
-        //opData.SsInfo.AddressAffc = append(opData.SsInfo.AddressAffc, opScript.To+"_"+opScript.Tick+"="+balanceBig.Text(10))
         opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, opScript.To+"_"+opScript.Tick, balanceBig.Text(10))
     }
     ////////////////////////////////
-    //opData.StAfter = nil
-    //stLine = MakeStLineBalance(keyBalanceFrom, stBalanceFrom)
-    //opData.StAfter = append(opData.StAfter, stLine)
     opData.StAfter = AppendStLineBalance(opData.StAfter, keyBalanceFrom, stBalanceFrom, true)
-    //stLine = MakeStLineBalance(keyBalanceTo, stBalanceTo)
-    //opData.StAfter = append(opData.StAfter, stLine)
     opData.StAfter = AppendStLineBalance(opData.StAfter, keyBalanceTo, stBalanceTo, true)
-    //stLine = MakeStLineMarket(keyMarket, nil)
-    //opData.StAfter = append(opData.StAfter, stLine)
     opData.StAfter = AppendStLineMarket(opData.StAfter, keyMarket, nil, true)
     ////////////////////////////////
     if (stBalanceFrom.Balance == "0" && stBalanceFrom.Locked == "0") {

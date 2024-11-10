@@ -52,7 +52,6 @@ func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, daaSco
 }
 
 ////////////////////////////////
-//func (opMethodList OpMethodList) PrepareStateKey(opData *storage.DataOperationType, stateMap storage.DataStateMapType) {
 func (opMethodList OpMethodList) PrepareStateKey(opScript *storage.DataScriptType, stateMap storage.DataStateMapType) {
     stateMap.StateTokenMap[opScript.Tick] = nil
     stateMap.StateBalanceMap[opScript.From+"_"+opScript.Tick] = nil
@@ -96,11 +95,7 @@ func (opMethodList OpMethodList) Do(index int, opData *storage.DataOperationType
     }
     ////////////////////////////////
     opData.StBefore = nil
-    //stLine := MakeStLineBalance(keyBalance, stBalance)
-    //opData.StBefore = append(opData.StBefore, stLine)
     opData.StBefore = AppendStLineBalance(opData.StBefore, keyBalance, stBalance, false)
-    //stLine = MakeStLineMarket(keyMarket, nil)
-    //opData.StBefore = append(opData.StBefore, stLine)
     opData.StBefore = AppendStLineMarket(opData.StBefore, keyMarket, nil, false)
     ////////////////////////////////
     balanceBig = balanceBig.Sub(balanceBig, amtBig)
@@ -123,11 +118,7 @@ func (opMethodList OpMethodList) Do(index int, opData *storage.DataOperationType
     stateMap.StateMarketMap[keyMarket] = stMarket
     ////////////////////////////////
     opData.StAfter = nil
-    //stLine = MakeStLineBalance(keyBalance, stBalance)
-    //opData.StAfter = append(opData.StAfter, stLine)
     opData.StAfter = AppendStLineBalance(opData.StAfter, keyBalance, stBalance, true)
-    //stLine = MakeStLineMarket(keyMarket, stMarket)
-    //opData.StAfter = append(opData.StAfter, stLine)
     opData.StAfter = AppendStLineMarket(opData.StAfter, keyMarket, stMarket, true)
     ////////////////////////////////
     opData.OpAccept = 1
