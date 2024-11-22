@@ -12,8 +12,9 @@ import (
 
 ////////////////////////////////
 const lenVspcListMax = 200
+const lenVspcListRuntimeMax = 950
 const lenVspcCheck = 23
-const lenRollbackListMax = 30
+const lenRollbackListRuntimeMax = 350
 
 ////////////////////////////////
 func scan() {
@@ -184,13 +185,13 @@ func scan() {
     }
     storage.SetRuntimeSynced(eRuntime.synced, eRuntime.opScoreLast, vspcListNext[lenVspcNext-1].DaaScore)
     eRuntime.vspcList = append(eRuntime.vspcList, vspcListNext...)
-    lenStart := len(eRuntime.vspcList) - lenVspcListMax
+    lenStart := len(eRuntime.vspcList) - lenVspcListRuntimeMax
     if lenStart > 0 {
         eRuntime.vspcList = eRuntime.vspcList[lenStart:]
     }
     storage.SetRuntimeVspcLast(eRuntime.vspcList)
     eRuntime.rollbackList = append(eRuntime.rollbackList, rollback)
-    lenStart = len(eRuntime.rollbackList) - lenRollbackListMax
+    lenStart = len(eRuntime.rollbackList) - lenRollbackListRuntimeMax
     if lenStart > 0 {
         eRuntime.rollbackList = eRuntime.rollbackList[lenStart:]
     }
