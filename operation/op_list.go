@@ -36,7 +36,7 @@ func (opMethodList OpMethodList) ScriptCollectEx(index int, script *storage.Data
 
 ////////////////////////////////
 func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
-    if (!testnet && daaScore < 9999999999) {  // undetermined for mainnet
+    if (!testnet && daaScore < 97539090) {
         return false
     }
     if (script.From == "" || script.Utxo == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateAmount(&script.Amt)) {

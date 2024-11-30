@@ -34,7 +34,9 @@ func (opMethodDeploy OpMethodDeploy) Validate(script *storage.DataScriptType, da
     if (script.From == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateAmount(&script.Max) || !ValidateAmount(&script.Lim) || !ValidateDec(&script.Dec, "8")) {
         return false
     }
-    ValidateAmount(&script.Pre)
+    if !ValidateAmount(&script.Pre) {
+        script.Pre = "0"
+    }
     if script.To == "" {
         script.To = script.From
     }
