@@ -18,6 +18,7 @@ const OpRangeBy = uint64(100000)
 ////////////////////////////////
 const KeyPrefixStateToken = "sttoken_"
 const KeyPrefixStateBalance = "stbalance_"
+const KeyPrefixStateMarket = "stmarket_"
 // KeyPrefixStateXxx ...
 
 ////////////////////////////////
@@ -89,12 +90,47 @@ func GetStateBalanceMap(balanceMap map[string]*StateBalanceType) (int64, error) 
 }
 
 ////////////////////////////////
+func GetStateMarketMap(marketMap map[string]*StateMarketType) (int64, error) {
+    keyList := [][]byte{}
+    for tickAddrTxid := range marketMap {
+        keyList = append(keyList, []byte(KeyPrefixStateMarket+tickAddrTxid))
+    }
+    mutex := new(sync.RWMutex)
+    mtsBatch, err := doGetBatchRocks(len(keyList), 0, func(iStart int, iEnd int, rdb *gorocksdb.TransactionDB, rro *gorocksdb.ReadOptions) (error) {
+        for i := iStart; i < iEnd; i ++ {
+            row, err := rdb.Get(rro, keyList[i])
+            if err != nil {
+                return err
+            }
+            dataByte := row.Data()
+            if dataByte == nil {
+                continue
+            }
+            decoded := StateMarketType{}
+            err = json.Unmarshal(dataByte, &decoded)
+            if err != nil {
+                return err
+            }
+            mutex.Lock()
+            marketMap[decoded.Tick+"_"+decoded.TAddr+"_"+decoded.UTxId] = &decoded
+            mutex.Unlock()
+        }
+        return nil
+    })
+    if err != nil {
+        return 0, err
+    }
+    return mtsBatch, nil
+}
+
+////////////////////////////////
 // GetStateXxx ...
 
 ////////////////////////////////
 func CopyDataStateMap(stateMapFrom DataStateMapType, stateMapTo *DataStateMapType) {
     stateMapTo.StateTokenMap = make(map[string]*StateTokenType)
     stateMapTo.StateBalanceMap = make(map[string]*StateBalanceType)
+    stateMapTo.StateMarketMap = make(map[string]*StateMarketType)
     // stateMapTo.StateXxxMap ...
     for key, stToken := range stateMapFrom.StateTokenMap {
         if stToken == nil {
@@ -111,6 +147,14 @@ func CopyDataStateMap(stateMapFrom DataStateMapType, stateMapTo *DataStateMapTyp
         }
         stData := *stBalance
         stateMapTo.StateBalanceMap[key] = &stData
+    }
+    for key, stMarket := range stateMapFrom.StateMarketMap {
+        if stMarket == nil {
+            stateMapTo.StateMarketMap[key] = nil
+            continue
+        }
+        stData := *stMarket
+        stateMapTo.StateMarketMap[key] = &stData
     }
     // StateXxx ...
 }
@@ -164,6 +208,23 @@ func SaveStateBatchCassa(stateMap DataStateMapType) (int64, error) {
     if err != nil {
         return 0, err
     }
+    keyList = make([]string, 0, len(stateMap.StateMarketMap))
+    for key := range stateMap.StateMarketMap {
+        keyList = append(keyList, key)
+    }
+    _, err = startExecuteBatchCassa(len(keyList), func(batch *gocql.Batch, i int) (error) {
+        stMarket := stateMap.StateMarketMap[keyList[i]]
+        key := strings.Split(keyList[i], "_")
+        if stMarket == nil {
+            batch.Query(cqlnDeleteStateMarket, key[0], key[1]+"_"+key[2])
+            return nil
+        }
+        batch.Query(cqlnSaveStateMarket, key[0], key[1]+"_"+key[2], stMarket.UAddr, stMarket.UAmt, stMarket.UScript, stMarket.TAmt, stMarket.OpAdd)
+        return nil
+    })
+    if err != nil {
+        return 0, err
+    }    
     // StateXxx ...
     return time.Now().UnixMilli() - mtss, nil
 }
@@ -185,7 +246,7 @@ func SaveOpDataBatchCassa(opDataList []DataOperationType) (int64, error) {
             Checkpoint: opDataList[i].Checkpoint,
         }
         stateJson, _ := json.Marshal(state)
-        scriptJson, _ := json.Marshal(opDataList[i].OpScript)
+        scriptJson, _ := json.Marshal(opDataList[i].OpScript[0])
         stBeforeJson, _ := json.Marshal(opDataList[i].StBefore)
         stAfterJson, _ := json.Marshal(opDataList[i].StAfter)
         stateJsonMap[opDataList[i].TxId] = string(stateJson)
@@ -258,6 +319,19 @@ func SaveStateBatchRocksBegin(stateMap DataStateMapType, txRocks *gorocksdb.Tran
             err = txRocks.Delete([]byte(key))
         } else {
             valueJson, _ = json.Marshal(balance)
+            err = txRocks.Put([]byte(key), valueJson)
+        }
+        if err != nil {
+            txRocks.Rollback()
+            return txRocks, 0, err
+        }
+    }
+    for key, market := range stateMap.StateMarketMap {
+        key = KeyPrefixStateMarket + key
+        if market == nil {
+            err = txRocks.Delete([]byte(key))
+        } else {
+            valueJson, _ = json.Marshal(market)
             err = txRocks.Put([]byte(key), valueJson)
         }
         if err != nil {

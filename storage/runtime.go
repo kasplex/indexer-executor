@@ -135,4 +135,10 @@ func SetRuntimeSynced(Synced bool, opScore uint64, daaScore uint64) (error) {
     return err
 }
 
+////////////////////////////////
+// Set the version.
+func SetRuntimeVersion(version string) (error) {
+    return SetRuntimeCassa("VERSION", version, "", "")
+}
+
 // ...

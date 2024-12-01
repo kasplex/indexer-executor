@@ -6,10 +6,12 @@ var (
     ////////////////////////////
     cqlnInitTable = []string {
         // v2.01
-        "CREATE TABLE IF NOT EXISTS sttoken(p2tick ascii, tick ascii, meta ascii, minted ascii, opmod bigint, mtsmod bigint, PRIMARY KEY((p2tick), tick));",// WITH CUSTOM_PROPERTIES = {'capacity_mode':{'throughput_mode':'PAY_PER_REQUEST'}, 'point_in_time_recovery':{'status':'enabled'}, 'encryption_specification':{'encryption_type':'AWS_OWNED_KMS_KEY'}} AND CLUSTERING ORDER BY(tick ASC);",
-        "CREATE TABLE IF NOT EXISTS stbalance(address ascii, tick ascii, dec tinyint, balance ascii, locked ascii, opmod bigint, PRIMARY KEY((address), tick));",// WITH CUSTOM_PROPERTIES = {'capacity_mode':{'throughput_mode':'PAY_PER_REQUEST'}, 'point_in_time_recovery':{'status':'enabled'}, 'encryption_specification':{'encryption_type':'AWS_OWNED_KMS_KEY'}} AND CLUSTERING ORDER BY(tick ASC);",
-        "CREATE TABLE IF NOT EXISTS oplist(oprange bigint, opscore bigint, txid ascii, state ascii, script ascii, tickaffc ascii, addressaffc ascii, PRIMARY KEY((oprange), opscore));",// WITH CUSTOM_PROPERTIES = {'capacity_mode':{'throughput_mode':'PAY_PER_REQUEST'}, 'point_in_time_recovery':{'status':'enabled'}, 'encryption_specification':{'encryption_type':'AWS_OWNED_KMS_KEY'}} AND CLUSTERING ORDER BY(opscore ASC);",
-        "CREATE TABLE IF NOT EXISTS opdata(txid ascii, state ascii, script ascii, stbefore ascii, stafter ascii, PRIMARY KEY((txid)));",// WITH CUSTOM_PROPERTIES = {'capacity_mode':{'throughput_mode':'PAY_PER_REQUEST'}, 'point_in_time_recovery':{'status':'enabled'}, 'encryption_specification':{'encryption_type':'AWS_OWNED_KMS_KEY'}};",
+        "CREATE TABLE IF NOT EXISTS sttoken(p2tick ascii, tick ascii, meta ascii, minted ascii, opmod bigint, mtsmod bigint, PRIMARY KEY((p2tick), tick)) WITH CLUSTERING ORDER BY(tick ASC);",
+        "CREATE TABLE IF NOT EXISTS stbalance(address ascii, tick ascii, dec tinyint, balance ascii, locked ascii, opmod bigint, PRIMARY KEY((address), tick)) WITH CLUSTERING ORDER BY(tick ASC);",
+        "CREATE TABLE IF NOT EXISTS oplist(oprange bigint, opscore bigint, txid ascii, state ascii, script ascii, tickaffc ascii, addressaffc ascii, PRIMARY KEY((oprange), opscore)) WITH CLUSTERING ORDER BY(opscore ASC);",
+        "CREATE TABLE IF NOT EXISTS opdata(txid ascii, state ascii, script ascii, stbefore ascii, stafter ascii, PRIMARY KEY((txid)));",
+        // v2.02
+        "CREATE TABLE IF NOT EXISTS stmarket(tick ascii, taddr_utxid ascii, uaddr ascii, uamt ascii, uscript ascii, tamt ascii, opadd bigint, PRIMARY KEY((tick), taddr_utxid)) WITH CLUSTERING ORDER BY(taddr_utxid ASC);",
         // ...
     }
     ////////////////////////////
@@ -24,6 +26,8 @@ var (
     cqlnDeleteStateToken = "DELETE FROM sttoken WHERE p2tick=? AND tick=?;"
     cqlnSaveStateBalance = "INSERT INTO stbalance (address,tick,dec,balance,locked,opmod) VALUES (?,?,?,?,?,?);"
     cqlnDeleteStateBalance = "DELETE FROM stbalance WHERE address=? AND tick=?;"
+    cqlnSaveStateMarket = "INSERT INTO stmarket (tick,taddr_utxid,uaddr,uamt,uscript,tamt,opadd) VALUES (?,?,?,?,?,?,?);"
+    cqlnDeleteStateMarket = "DELETE FROM stmarket WHERE tick=? AND taddr_utxid=?;"
     ////////////////////////////
     cqlnSaveOpData = "INSERT INTO opdata (txid,state,script,stbefore,stafter) VALUES (?,?,?,?,?);"
     cqlnDeleteOpData = "DELETE FROM opdata WHERE txid=?;"

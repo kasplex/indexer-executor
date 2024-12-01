@@ -73,6 +73,7 @@ func Init(ctx context.Context, wg *sync.WaitGroup, cfg config.StartupConfig, tes
         slog.Info("explorer.Init", "lastVspcDaaScore", eRuntime.cfg.DaaScoreRange[0][0], "lastVspcBlockHash", "")
         storage.SetRuntimeSynced(false, eRuntime.opScoreLast, eRuntime.cfg.DaaScoreRange[0][0])
     }
+    storage.SetRuntimeVersion(config.Version)
     slog.Info("explorer ready.")
 }
 

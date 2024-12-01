@@ -110,6 +110,7 @@ func parseScriptInput(script string) (bool, []string) {
     }
     
     // Get the public key or multisig script hash
+    scriptSig := ""
     multisig := false
     mm := int64(0)
     nn := int64(0)
@@ -135,9 +136,11 @@ func parseScriptInput(script string) (bool, []string) {
         if (lenD == 64 && fSig == "ac") {
             kPub = script[n:n+64]
             n += 66
+            scriptSig = "20" + kPub + fSig
         } else if (lenD == 66 && fSig == "ab") {
             kPub = script[n:n+66]
             n += 68
+            scriptSig = "21" + kPub + fSig
         } else {
             return false, nil
         }
@@ -150,7 +153,7 @@ func parseScriptInput(script string) (bool, []string) {
                 if (!r || len(kPubList) != int(nn)) {
                     return false, nil
                 }
-                kPub = misc.ConvKPubListToScriptHashMultisig(mm, kPubList, nn)
+                kPub, scriptSig = misc.ConvKPubListToScriptHashMultisig(mm, kPubList, nn)
                 break
             }
             if (lenD == 64 || lenD == 66) {
@@ -259,7 +262,7 @@ func parseScriptInput(script string) (bool, []string) {
     } else {
         from = misc.ConvKPubToAddr(kPub, eRuntime.testnet)
     }
-    return true, []string{from, p0, p1, p2}
+    return true, []string{from, p0, p1, p2, scriptSig}
 }
 
 ////////////////////////////////
@@ -272,27 +275,42 @@ func parseOpData(txData *storage.DataTransactionType) (*storage.DataOperationTyp
     if lenInput <= 0 {
         return nil, nil
     }
-    script := txData.Data.Inputs[0].SignatureScript
-    isOp, scriptInfo := parseScriptInput(script)
-    if !isOp {
-        return nil, nil
+    var opScript []*storage.DataScriptType
+    scriptSig := ""
+    for i, input := range txData.Data.Inputs {
+        script := input.SignatureScript
+        isOp, scriptInfo := parseScriptInput(script)
+        if (!isOp || scriptInfo[0] == "") {
+            continue
+        }
+        decoded := storage.DataScriptType{}
+        err := json.Unmarshal([]byte(scriptInfo[1]), &decoded)
+        if err != nil {
+            continue
+        }
+        decoded.From = scriptInfo[0]
+        if (!eRuntime.testnet && txData.DaaScore <= 83525600 && len(txData.Data.Outputs) > 0) {  // use output[0]
+            decoded.To = txData.Data.Outputs[0].VerboseData.ScriptPublicKeyAddress
+        }
+        if (!ValidateP(&decoded.P) || !ValidateOp(&decoded.Op) || !ValidateAscii(&decoded.To)) {
+            continue
+        }
+        operation.Method_Registered[decoded.Op].ScriptCollectEx(i, &decoded, txData, eRuntime.testnet)
+        if !operation.Method_Registered[decoded.Op].Validate(&decoded, txData.DaaScore, eRuntime.testnet) {
+            continue
+        }
+        if i == 0 {
+            //decoded0 = &decoded
+            opScript = append(opScript, &decoded)
+            scriptSig = scriptInfo[4]
+            continue
+        }
+        if !operation.OpRecycle_Registered[decoded.Op] {
+            continue
+        }
+        opScript = append(opScript, &decoded)
     }
-    if scriptInfo[0] == "" {
-        return nil, nil
-    }
-    decoded := storage.DataScriptType{}
-    err := json.Unmarshal([]byte(scriptInfo[1]), &decoded)
-    if err != nil {
-        return nil, nil
-    }
-    decoded.From = scriptInfo[0]
-    if (!eRuntime.testnet && txData.DaaScore <= 83525600) {  // use output[0] as the to-address
-        decoded.To = txData.Data.Outputs[0].VerboseData.ScriptPublicKeyAddress
-    }
-    if (!ValidateP(&decoded.P) || !ValidateOp(&decoded.Op) || !ValidateAscii(&decoded.To)) {
-        return nil, nil
-    }
-    if !operation.Method_Registered[decoded.Op].Validate(&decoded, eRuntime.testnet) {
+    if len(opScript) <= 0 {
         return nil, nil
     }
     opData := &storage.DataOperationType{
@@ -300,7 +318,8 @@ func parseOpData(txData *storage.DataTransactionType) (*storage.DataOperationTyp
         DaaScore: txData.DaaScore,
         BlockAccept: txData.BlockAccept,
         MtsAdd: int64(txData.Data.VerboseData.BlockTime),
-        OpScript: &decoded,
+        OpScript: opScript,
+        ScriptSig: scriptSig,
         SsInfo: &storage.DataStatsType{},
     }
     return opData, nil
@@ -323,7 +342,7 @@ func ParseOpDataList(txDataList []storage.DataTransactionType) ([]storage.DataOp
         }
         mutex.Lock()
         opDataMap[opData.TxId] = opData
-        opDataMap[opData.TxId].FeeLeast = operation.Method_Registered[opData.OpScript.Op].FeeLeast(opData.DaaScore)
+        opDataMap[opData.TxId].FeeLeast = operation.Method_Registered[opData.OpScript[0].Op].FeeLeast(opData.DaaScore)
         if opDataMap[opData.TxId].FeeLeast > 0 {
             for _, input := range txDataList[i].Data.Inputs {
                 txIdMap[input.PreviousOutpoint.TransactionId] = true
