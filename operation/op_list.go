@@ -36,7 +36,7 @@ func (opMethodList OpMethodList) ScriptCollectEx(index int, script *storage.Data
 
 ////////////////////////////////
 func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
-    if (!testnet && daaScore < 9999999999) {  // undetermined for mainnet
+    if (!testnet && daaScore < 97539090) {
         return false
     }
     if (script.From == "" || script.Utxo == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateAmount(&script.Amt)) {
@@ -48,6 +48,7 @@ func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, daaSco
     script.Pre = ""
     script.Dec = ""
     script.Price = ""
+    script.Mod = ""
     return true
 }
 
@@ -55,6 +56,7 @@ func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, daaSco
 func (opMethodList OpMethodList) PrepareStateKey(opScript *storage.DataScriptType, stateMap storage.DataStateMapType) {
     stateMap.StateTokenMap[opScript.Tick] = nil
     stateMap.StateBalanceMap[opScript.From+"_"+opScript.Tick] = nil
+    stateMap.StateBlacklistMap[opScript.Tick+"_"+opScript.From] = nil
 }
 
 ////////////////////////////////
@@ -64,6 +66,11 @@ func (opMethodList OpMethodList) Do(index int, opData *storage.DataOperationType
     if stateMap.StateTokenMap[opScript.Tick] == nil {
         opData.OpAccept = -1
         opData.OpError = "tick not found"
+        return nil
+    }
+    if stateMap.StateBlacklistMap[opScript.Tick+"_"+opScript.From] != nil {
+        opData.OpAccept = -1
+        opData.OpError = "blacklist"
         return nil
     }
     ////////////////////////////////

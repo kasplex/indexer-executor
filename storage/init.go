@@ -4,9 +4,7 @@ package storage
 
 import (
     "log"
-    //"sync"
-    //"time"
-    //"math"
+    "strings"
     "log/slog"
     "github.com/gocql/gocql"
     "github.com/tecbot/gorocksdb"
@@ -60,6 +58,9 @@ func Init(cfgCassa config.CassaConfig, cfgRocks config.RocksConfig) {
     for _, cqln := range cqlnInitTable {
         err = sRuntime.sessionCassa.Query(cqln).Exec()
         if err != nil {
+            if strings.HasSuffix(err.Error(), "conflicts with an existing column") {
+                continue
+            }
             log.Fatalln("storage.Init fatal:", err.Error())
         }
     }

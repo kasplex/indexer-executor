@@ -44,7 +44,7 @@ func (opMethodSend OpMethodSend) ScriptCollectEx(index int, script *storage.Data
 
 ////////////////////////////////
 func (opMethodSend OpMethodSend) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
-    if (!testnet && daaScore < 9999999999) {  // undetermined for mainnet
+    if (!testnet && daaScore < 97539090) {
         return false
     }
     if (script.From == "" || script.To == "" || script.Utxo == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick)) {
@@ -55,6 +55,7 @@ func (opMethodSend OpMethodSend) Validate(script *storage.DataScriptType, daaSco
     script.Lim = ""
     script.Pre = ""
     script.Dec = ""
+    script.Mod = ""
     return true
 }
 
@@ -139,12 +140,12 @@ func (opMethodSend OpMethodSend) Do(index int, opData *storage.DataOperationType
     opData.SsInfo.TickAffc = AppendSsInfoTickAffc(opData.SsInfo.TickAffc, opScript.Tick, nTickAffc)
     balanceBig.SetString(stBalanceFrom.Balance, 10)
     balanceBig = balanceBig.Add(balanceBig, lockedBig)
-    opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, opScript.From+"_"+opScript.Tick, balanceBig.Text(10))
+    opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, keyBalanceFrom, balanceBig.Text(10))
     if keyBalanceFrom != keyBalanceTo {
         balanceBig.SetString(stBalanceTo.Balance, 10)
         lockedBig.SetString(stBalanceTo.Locked, 10)
         balanceBig = balanceBig.Add(balanceBig, lockedBig)
-        opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, opScript.To+"_"+opScript.Tick, balanceBig.Text(10))
+        opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, keyBalanceTo, balanceBig.Text(10))
     }
     ////////////////////////////////
     opData.StAfter = AppendStLineBalance(opData.StAfter, keyBalanceFrom, stBalanceFrom, true)

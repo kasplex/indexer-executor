@@ -31,10 +31,23 @@ func (opMethodDeploy OpMethodDeploy) ScriptCollectEx(index int, script *storage.
 
 ////////////////////////////////
 func (opMethodDeploy OpMethodDeploy) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
-    if (script.From == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateAmount(&script.Max) || !ValidateAmount(&script.Lim) || !ValidateDec(&script.Dec, "8")) {
-        return false
+    if ((testnet || daaScore >= 9999999999) && script.Mod == "issue") {  // undetermined for mainnet / mode issue
+        if (script.From == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateDec(&script.Dec, "8")) {
+            return false
+        }
+        if (script.Max != "0" && !ValidateAmount(&script.Max)) {
+            return false
+        }
+        script.Lim = "0"
+    } else {  // mode mint
+        if (script.From == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateAmount(&script.Max) || !ValidateAmount(&script.Lim) || !ValidateDec(&script.Dec, "8")) {
+            return false
+        }
+        script.Mod = ""
     }
-    ValidateAmount(&script.Pre)
+    if !ValidateAmount(&script.Pre) {
+        script.Pre = "0"
+    }
     if script.To == "" {
         script.To = script.From
     }
@@ -99,15 +112,18 @@ func (opMethodDeploy OpMethodDeploy) Do(index int, opData *storage.DataOperation
     ////////////////////////////////
     decInt, _ := strconv.Atoi(opScript.Dec)
     minted := "0"
+    burned := "0"
     stToken = &storage.StateTokenType{
         Tick: opScript.Tick,
         Max: opScript.Max,
         Lim: opScript.Lim,
         Pre: opScript.Pre,
         Dec: decInt,
+        Mod: opScript.Mod,
         From: opScript.From,
         To: opScript.To,
         Minted: minted,
+        Burned: burned,
         TxId: opData.TxId,
         OpAdd: opData.OpScore,
         OpMod: opData.OpScore,
@@ -117,12 +133,14 @@ func (opMethodDeploy OpMethodDeploy) Do(index int, opData *storage.DataOperation
     stateMap.StateTokenMap[opScript.Tick] = stToken
     if opScript.Pre != "0" {
         minted = opScript.Pre
-        maxBig := new(big.Int)
-        maxBig.SetString(opScript.Max, 10)
-        preBig := new(big.Int)
-        preBig.SetString(opScript.Pre, 10)
-        if preBig.Cmp(maxBig) > 0 {
-            minted = opScript.Max
+        if opScript.Max != "0" {
+            maxBig := new(big.Int)
+            maxBig.SetString(opScript.Max, 10)
+            preBig := new(big.Int)
+            preBig.SetString(opScript.Pre, 10)
+            if preBig.Cmp(maxBig) > 0 {
+                minted = opScript.Max
+            }
         }
         stToken.Minted = minted
         stBalance = &storage.StateBalanceType{
@@ -136,7 +154,7 @@ func (opMethodDeploy OpMethodDeploy) Do(index int, opData *storage.DataOperation
         stateMap.StateBalanceMap[keyBalance] = stBalance
         ////////////////////////////
         opData.SsInfo.TickAffc = AppendSsInfoTickAffc(opData.SsInfo.TickAffc, opScript.Tick, 1)
-        opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, opScript.To+"_"+opScript.Tick, minted)
+        opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, keyBalance, minted)
     } else {
         ////////////////////////////
         opData.SsInfo.TickAffc = AppendSsInfoTickAffc(opData.SsInfo.TickAffc, opScript.Tick, 0)

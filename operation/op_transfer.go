@@ -39,6 +39,7 @@ func (opMethodTransfer OpMethodTransfer) Validate(script *storage.DataScriptType
     script.Dec = ""
     script.Utxo = ""
     script.Price = ""
+    script.Mod = ""
     return true
 }
 
@@ -47,6 +48,7 @@ func (opMethodTransfer OpMethodTransfer) PrepareStateKey(opScript *storage.DataS
     stateMap.StateTokenMap[opScript.Tick] = nil
     stateMap.StateBalanceMap[opScript.From+"_"+opScript.Tick] = nil
     stateMap.StateBalanceMap[opScript.To+"_"+opScript.Tick] = nil
+    stateMap.StateBlacklistMap[opScript.Tick+"_"+opScript.From] = nil
 }
 
 ////////////////////////////////
@@ -56,6 +58,11 @@ func (opMethodTransfer OpMethodTransfer) Do(index int, opData *storage.DataOpera
     if stateMap.StateTokenMap[opScript.Tick] == nil {
         opData.OpAccept = -1
         opData.OpError = "tick not found"
+        return nil
+    }
+    if stateMap.StateBlacklistMap[opScript.Tick+"_"+opScript.From] != nil {
+        opData.OpAccept = -1
+        opData.OpError = "blacklist"
         return nil
     }
     if (opScript.From == opScript.To || !misc.VerifyAddr(opScript.To, testnet)) {
@@ -119,8 +126,8 @@ func (opMethodTransfer OpMethodTransfer) Do(index int, opData *storage.DataOpera
     balanceToTotal := balanceBig.Text(10)
     ////////////////////////////////
     opData.SsInfo.TickAffc = AppendSsInfoTickAffc(opData.SsInfo.TickAffc, opScript.Tick, nTickAffc)
-    opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, opScript.From+"_"+opScript.Tick, balanceFromTotal)
-    opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, opScript.To+"_"+opScript.Tick, balanceToTotal)
+    opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, keyBalanceFrom, balanceFromTotal)
+    opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, keyBalanceTo, balanceToTotal)
     ////////////////////////////////
     opData.StAfter = nil
     opData.StAfter = AppendStLineBalance(opData.StAfter, keyBalanceFrom, stBalanceFrom, true)

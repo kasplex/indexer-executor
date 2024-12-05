@@ -84,6 +84,7 @@ func PrepareStateBatch(opDataList []storage.DataOperationType) (storage.DataStat
         StateTokenMap: make(map[string]*storage.StateTokenType),
         StateBalanceMap: make(map[string]*storage.StateBalanceType),
         StateMarketMap: make(map[string]*storage.StateMarketType),
+        StateBlacklistMap: make(map[string]*storage.StateBlacklistType),
         // StateXxx ...
     }
     for _, opData := range opDataList{
@@ -100,6 +101,10 @@ func PrepareStateBatch(opDataList []storage.DataOperationType) (storage.DataStat
         return storage.DataStateMapType{}, 0, err
     }
     _, err = storage.GetStateMarketMap(stateMap.StateMarketMap)
+    if err != nil {
+        return storage.DataStateMapType{}, 0, err
+    }
+    _, err = storage.GetStateBlacklistMap(stateMap.StateBlacklistMap)
     if err != nil {
         return storage.DataStateMapType{}, 0, err
     }
@@ -178,9 +183,9 @@ func MakeStLineToken(key string, stToken *storage.StateTokenType, isDeploy bool)
     stLine += ","
     strDec := strconv.Itoa(stToken.Dec)
     opScore := stToken.OpMod
-    if isDeploy {
+    /*if isDeploy {
         opScore = stToken.OpAdd
-    }
+    }*/
     strOpscore := strconv.FormatUint(opScore, 10)
     if isDeploy {
         stLine += stToken.Max + ","
@@ -192,6 +197,10 @@ func MakeStLineToken(key string, stToken *storage.StateTokenType, isDeploy bool)
     }
     stLine += stToken.Minted + ","
     stLine += strOpscore
+    if stToken.Mod == "issue" {
+        stLine += "," + stToken.Mod
+        stLine += "," + stToken.Burned
+    }
     return stLine
 }
 func AppendStLineToken(stLine []string, key string, stToken *storage.StateTokenType, isDeploy bool, isAfter bool) ([]string) {
@@ -279,6 +288,37 @@ func AppendStLineMarket(stLine []string, key string, stMarket *storage.StateMark
     }
     if isAfter {
         stLine[iExists] = MakeStLineMarket(key, stMarket)
+    }
+    return stLine
+}
+
+////////////////////////////////
+func MakeStLineBlacklist(key string, stBlacklist *storage.StateBlacklistType) (string) {
+    stLine := storage.KeyPrefixStateBlacklist + key
+    if stBlacklist == nil {
+        return stLine
+    }
+    stLine += ","
+    strOpscore := strconv.FormatUint(stBlacklist.OpAdd, 10)
+    stLine += strOpscore
+    return stLine
+}
+func AppendStLineBlacklist(stLine []string, key string, stBlacklist *storage.StateBlacklistType, isAfter bool) ([]string) {
+    keyFull := storage.KeyPrefixStateBlacklist + key
+    iExists := -1
+    list := []string{}
+    for i, line := range stLine {
+        list = strings.SplitN(line, ",", 2)
+        if list[0] == keyFull {
+            iExists = i
+            break
+        }
+    }
+    if iExists < 0 {
+        return append(stLine, MakeStLineBlacklist(key, stBlacklist))
+    }
+    if isAfter {
+        stLine[iExists] = MakeStLineBlacklist(key, stBlacklist)
     }
     return stLine
 }

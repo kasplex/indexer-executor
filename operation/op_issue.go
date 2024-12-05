@@ -9,31 +9,33 @@ import (
 )
 
 ////////////////////////////////
-type OpMethodMint struct {}
+type OpMethodIssue struct {}
 
 ////////////////////////////////
 func init() {
-    opName := "mint"
+    opName := "issue"
     P_Registered["KRC-20"] = true
     Op_Registered[opName] = true
-    Method_Registered[opName] = new(OpMethodMint)
+    Method_Registered[opName] = new(OpMethodIssue)
 }
 
 ////////////////////////////////
-func (opMethodMint OpMethodMint) FeeLeast(daaScore uint64) (uint64) {
+func (opMethodIssue OpMethodIssue) FeeLeast(daaScore uint64) (uint64) {
     // if daaScore ...
-    return 100000000
+    return 0
 }
 
 ////////////////////////////////
-func (opMethodMint OpMethodMint) ScriptCollectEx(index int, script *storage.DataScriptType, txData *storage.DataTransactionType, testnet bool) {}
+func (opMethodIssue OpMethodIssue) ScriptCollectEx(index int, script *storage.DataScriptType, txData *storage.DataTransactionType, testnet bool) {}
 
 ////////////////////////////////
-func (opMethodMint OpMethodMint) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
-    if (script.From == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick)) {
+func (opMethodIssue OpMethodIssue) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
+    if (!testnet && daaScore < 9999999999) {  // undetermined for mainnet
         return false
     }
-    script.Amt = ""
+    if (script.From == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateAmount(&script.Amt)) {
+        return false
+    }
     if script.To == "" {
         script.To = script.From
     }
@@ -48,13 +50,13 @@ func (opMethodMint OpMethodMint) Validate(script *storage.DataScriptType, daaSco
 }
 
 ////////////////////////////////
-func (opMethodMint OpMethodMint) PrepareStateKey(opScript *storage.DataScriptType, stateMap storage.DataStateMapType) {
+func (opMethodIssue OpMethodIssue) PrepareStateKey(opScript *storage.DataScriptType, stateMap storage.DataStateMapType) {
     stateMap.StateTokenMap[opScript.Tick] = nil
     stateMap.StateBalanceMap[opScript.To+"_"+opScript.Tick] = nil
 }
 
 ////////////////////////////////
-func (opMethodMint OpMethodMint) Do(index int, opData *storage.DataOperationType, stateMap storage.DataStateMapType, testnet bool) (error) {
+func (opMethodIssue OpMethodIssue) Do(index int, opData *storage.DataOperationType, stateMap storage.DataStateMapType, testnet bool) (error) {
     opScript := opData.OpScript[index]
     ////////////////////////////////
     if stateMap.StateTokenMap[opScript.Tick] == nil {
@@ -62,19 +64,14 @@ func (opMethodMint OpMethodMint) Do(index int, opData *storage.DataOperationType
         opData.OpError = "tick not found"
         return nil
     }
-    if stateMap.StateTokenMap[opScript.Tick].Mod != "" {
+    if stateMap.StateTokenMap[opScript.Tick].Mod != "issue" {
         opData.OpAccept = -1
         opData.OpError = "mode invalid"
         return nil
     }
-    if opData.Fee == 0 {
+    if opScript.From != stateMap.StateTokenMap[opScript.Tick].To {
         opData.OpAccept = -1
-        opData.OpError = "fee unknown"
-        return nil
-    }
-    if opData.Fee < opData.FeeLeast {
-        opData.OpAccept = -1
-        opData.OpError = "fee not enough"
+        opData.OpError = "no ownership"
         return nil
     }
     if !misc.VerifyAddr(opScript.To, testnet) {
@@ -87,24 +84,26 @@ func (opMethodMint OpMethodMint) Do(index int, opData *storage.DataOperationType
     stToken := stateMap.StateTokenMap[opScript.Tick]
     stBalance := stateMap.StateBalanceMap[keyBalance]
     ////////////////////////////////
-    amt := stToken.Lim
-    maxBig := new(big.Int)
-    maxBig.SetString(stToken.Max, 10)
+    amt := opScript.Amt
     mintedBig := new(big.Int)
     mintedBig.SetString(stToken.Minted, 10)
-    leftBig := maxBig.Sub(maxBig, mintedBig)
     limBig := new(big.Int)
-    limBig.SetString("0", 10)
-    if limBig.Cmp(leftBig) >= 0 {
-        opData.OpAccept = -1
-        opData.OpError = "mint finished"
-        return nil
+    if stToken.Max != "" {
+        maxBig := new(big.Int)
+        maxBig.SetString(stToken.Max, 10)
+        leftBig := maxBig.Sub(maxBig, mintedBig)
+        limBig.SetString("0", 10)
+        if limBig.Cmp(leftBig) >= 0 {
+            opData.OpAccept = -1
+            opData.OpError = "issue finished"
+            return nil
+        }
+        limBig.SetString(amt, 10)
+        if limBig.Cmp(leftBig) > 0 {
+            amt = leftBig.Text(10)
+        }
+        opScript.Amt = amt
     }
-    limBig.SetString(amt, 10)
-    if limBig.Cmp(leftBig) > 0 {
-        amt = leftBig.Text(10)
-    }
-    opScript.Amt = amt
     limBig.SetString(amt, 10)
     mintedBig = mintedBig.Add(mintedBig, limBig)
     minted := mintedBig.Text(10)
@@ -152,7 +151,7 @@ func (opMethodMint OpMethodMint) Do(index int, opData *storage.DataOperationType
 }
 
 ////////////////////////////////
-/*func (opMethodMint OpMethodMint) UnDo() (error) {
+/*func (opMethodIssue OpMethodIssue) UnDo() (error) {
     // ...
     return nil
 }*/

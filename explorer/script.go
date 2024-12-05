@@ -300,7 +300,6 @@ func parseOpData(txData *storage.DataTransactionType) (*storage.DataOperationTyp
             continue
         }
         if i == 0 {
-            //decoded0 = &decoded
             opScript = append(opScript, &decoded)
             scriptSig = scriptInfo[4]
             continue
