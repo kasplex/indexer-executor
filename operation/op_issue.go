@@ -88,7 +88,7 @@ func (opMethodIssue OpMethodIssue) Do(index int, opData *storage.DataOperationTy
     mintedBig := new(big.Int)
     mintedBig.SetString(stToken.Minted, 10)
     limBig := new(big.Int)
-    if stToken.Max != "" {
+    if stToken.Max != "0" {
         maxBig := new(big.Int)
         maxBig.SetString(stToken.Max, 10)
         leftBig := maxBig.Sub(maxBig, mintedBig)
