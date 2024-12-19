@@ -229,7 +229,7 @@ func SaveStateBatchCassa(stateMap DataStateMapType) (int64, error) {
             MtsAdd: stToken.MtsAdd,
         }
         metaJson, _ := json.Marshal(meta)
-        batch.Query(cqlnSaveStateToken, tick[:2], tick, string(metaJson), stToken.Minted, stToken.OpMod, stToken.MtsMod)
+        batch.Query(cqlnSaveStateToken, tick[:2], tick, string(metaJson), stToken.Minted, stToken.OpMod, stToken.MtsMod, stToken.Mod, stToken.Burned)
         return nil
     })
     if err != nil {

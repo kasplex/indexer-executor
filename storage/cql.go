@@ -25,7 +25,7 @@ var (
     ////////////////////////////
     cqlnGetTransactionData = "SELECT txid,data FROM transaction WHERE txid IN ({txidIn});"
     ////////////////////////////
-    cqlnSaveStateToken = "INSERT INTO sttoken (p2tick,tick,meta,minted,opmod,mtsmod) VALUES (?,?,?,?,?,?);"
+    cqlnSaveStateToken = "INSERT INTO sttoken (p2tick,tick,meta,minted,opmod,mtsmod,mod,burned) VALUES (?,?,?,?,?,?,?,?);"
     cqlnDeleteStateToken = "DELETE FROM sttoken WHERE p2tick=? AND tick=?;"
     cqlnSaveStateBalance = "INSERT INTO stbalance (address,tick,dec,balance,locked,opmod) VALUES (?,?,?,?,?,?);"
     cqlnDeleteStateBalance = "DELETE FROM stbalance WHERE address=? AND tick=?;"
