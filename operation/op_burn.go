@@ -49,7 +49,7 @@ func (opMethodBurn OpMethodBurn) Validate(script *storage.DataScriptType, daaSco
 ////////////////////////////////
 func (opMethodBurn OpMethodBurn) PrepareStateKey(opScript *storage.DataScriptType, stateMap storage.DataStateMapType) {
     stateMap.StateTokenMap[opScript.Tick] = nil
-    stateMap.StateBalanceMap[opScript.To+"_"+opScript.Tick] = nil
+    stateMap.StateBalanceMap[opScript.From+"_"+opScript.Tick] = nil
 }
 
 ////////////////////////////////
