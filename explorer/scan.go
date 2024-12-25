@@ -42,9 +42,11 @@ func scan() {
         time.Sleep(3000*time.Millisecond)
         return
     }
-    // Ignore the last reserved vspc data, reduce the probability of vspc-reorg.
+    // Ignore the last reserved vspc data if synced, reduce the probability of vspc-reorg.
     lenVspcNext := len(vspcListNext)
-    lenVspcNext -= eRuntime.cfg.Hysteresis
+    if (eRuntime.synced) {
+        lenVspcNext -= eRuntime.cfg.Hysteresis
+    }
     if lenVspcNext <= 0 {
         slog.Debug("storage.GetNodeVspcList empty.", "daaScore", daaScoreStart)
         time.Sleep(1550*time.Millisecond)
@@ -96,6 +98,7 @@ func scan() {
         return
     } else if vspcListNext == nil {
         slog.Debug("storage.checkDaaScoreRollback empty.", "daaScore", daaScoreStart)
+        eRuntime.synced = false
         time.Sleep(1750*time.Millisecond)
         return
     }
