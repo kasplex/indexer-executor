@@ -224,6 +224,7 @@ func SaveStateBatchCassa(stateMap DataStateMapType) (int64, error) {
             Dec: stToken.Dec,
             From: stToken.From,
             To: stToken.To,
+            Name: stToken.Name,
             TxId: stToken.TxId,
             OpAdd: stToken.OpAdd,
             MtsAdd: stToken.MtsAdd,

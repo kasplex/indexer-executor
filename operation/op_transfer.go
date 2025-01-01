@@ -29,8 +29,8 @@ func (opMethodTransfer OpMethodTransfer) FeeLeast(daaScore uint64) (uint64) {
 func (opMethodTransfer OpMethodTransfer) ScriptCollectEx(index int, script *storage.DataScriptType, txData *storage.DataTransactionType, testnet bool) {}
 
 ////////////////////////////////
-func (opMethodTransfer OpMethodTransfer) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
-    if (script.From == "" || script.To == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateAmount(&script.Amt)) {
+func (opMethodTransfer OpMethodTransfer) Validate(script *storage.DataScriptType, txId string, daaScore uint64, testnet bool) (bool) {
+    if (script.From == "" || script.To == "" || script.P != "KRC-20" || !ValidateTickTxId(&script.Tick) || !ValidateAmount(&script.Amt)) {
         return false
     }
     script.Max = ""
@@ -40,6 +40,7 @@ func (opMethodTransfer OpMethodTransfer) Validate(script *storage.DataScriptType
     script.Utxo = ""
     script.Price = ""
     script.Mod = ""
+    script.Name = ""
     return true
 }
 

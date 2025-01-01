@@ -35,11 +35,11 @@ func (opMethodList OpMethodList) ScriptCollectEx(index int, script *storage.Data
 }
 
 ////////////////////////////////
-func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
+func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, txId string, daaScore uint64, testnet bool) (bool) {
     if (!testnet && daaScore < 97539090) {
         return false
     }
-    if (script.From == "" || script.Utxo == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateAmount(&script.Amt)) {
+    if (script.From == "" || script.Utxo == "" || script.P != "KRC-20" || !ValidateTickTxId(&script.Tick) || !ValidateAmount(&script.Amt)) {
         return false
     }
     script.To = ""
@@ -49,6 +49,7 @@ func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, daaSco
     script.Dec = ""
     script.Price = ""
     script.Mod = ""
+    script.Name = ""
     return true
 }
 

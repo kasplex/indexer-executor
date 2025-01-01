@@ -9,6 +9,7 @@ import (
     "strings"
     //"log/slog"
     "math/big"
+    "encoding/hex"
     "golang.org/x/crypto/blake2b"
     "kasplex-executor/storage"
 )
@@ -16,7 +17,7 @@ import (
 ////////////////////////////////
 type OpMethod interface {
     ScriptCollectEx(int, *storage.DataScriptType, *storage.DataTransactionType, bool)
-    Validate(*storage.DataScriptType, uint64, bool) (bool)
+    Validate(*storage.DataScriptType, string, uint64, bool) (bool)
     FeeLeast(uint64) (uint64)
     PrepareStateKey(*storage.DataScriptType, storage.DataStateMapType)
     Do(int, *storage.DataOperationType, storage.DataStateMapType, bool) (error)
@@ -200,6 +201,7 @@ func MakeStLineToken(key string, stToken *storage.StateTokenType, isDeploy bool)
     if stToken.Mod == "issue" {
         stLine += "," + stToken.Mod
         stLine += "," + stToken.Burned
+        stLine += "," + stToken.Name
     }
     return stLine
 }
@@ -376,6 +378,25 @@ func ValidateTick(tick *string) (bool) {
         }
     }
     return true
+}
+////////////////////////////////
+func ValidateTxId(tick *string) (bool) {
+    *tick = strings.ToLower(*tick)
+    if len(*tick) != 64 {
+        return false
+    }
+    _, err := hex.DecodeString(*tick)
+    if err != nil {
+        return false
+    }
+    return true
+}
+////////////////////////////////
+func ValidateTickTxId(tick *string) (bool) {
+    if len(*tick) < 64 {
+        return ValidateTick(tick)
+    }
+    return ValidateTxId(tick)
 }
 ////////////////////////////////
 func ValidateAmount(amount *string) (bool) {

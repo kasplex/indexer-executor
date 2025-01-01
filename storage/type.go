@@ -36,6 +36,7 @@ type DataScriptType struct {
     Utxo string `json:"utxo,omitempty"`
     Price string `json:"price,omitempty"`
     Mod string `json:"mod,omitempty"`
+    Name string `json:"name,omitempty"`
     // ...
 }
 
@@ -86,6 +87,7 @@ type StateTokenMetaType struct {
     Mod string `json:"mod,omitempty"`
     From string `json:"from,omitempty"`
     To string `json:"to,omitempty"`
+    Name string `json:"name,omitempty"`
     TxId string `json:"txid,omitempty"`
     OpAdd uint64 `json:"opadd,omitempty"`
     MtsAdd int64 `json:"mtsadd,omitempty"`
@@ -103,6 +105,7 @@ type StateTokenType struct {
     To string `json:"to,omitempty"`
     Minted string `json:"minted,omitempty"`
     Burned string `json:"burned,omitempty"`
+    Name string `json:"name,omitempty"`
     TxId string `json:"txid,omitempty"`
     OpAdd uint64 `json:"opadd,omitempty"`
     OpMod uint64 `json:"opmod,omitempty"`

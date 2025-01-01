@@ -296,7 +296,7 @@ func parseOpData(txData *storage.DataTransactionType) (*storage.DataOperationTyp
             continue
         }
         operation.Method_Registered[decoded.Op].ScriptCollectEx(i, &decoded, txData, eRuntime.testnet)
-        if !operation.Method_Registered[decoded.Op].Validate(&decoded, txData.DaaScore, eRuntime.testnet) {
+        if !operation.Method_Registered[decoded.Op].Validate(&decoded, txData.TxId, txData.DaaScore, eRuntime.testnet) {
             continue
         }
         if i == 0 {

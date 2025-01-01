@@ -12,9 +12,12 @@ import (
 
 ////////////////////////////////
 const lenVspcListMax = 200
-const lenVspcListRuntimeMax = 950
+const lenVspcListRuntimeMax = 1150
 const lenVspcCheck = 23
 const lenRollbackListRuntimeMax = 350
+
+////////////////////////////////
+var lenVspcListMaxAdj = lenVspcListMax
 
 ////////////////////////////////
 func scan() {
@@ -36,7 +39,7 @@ func scan() {
     }
     //_, daaScoreStart = checkDaaScoreRange(daaScoreStart)
     // Get next vspc data list from cluster db.
-    vspcListNext, mtsBatchVspc, err := storage.GetNodeVspcList(daaScoreStart, lenVspcListMax)
+    vspcListNext, mtsBatchVspc, err := storage.GetNodeVspcList(daaScoreStart, lenVspcListMaxAdj)
     if err != nil {
         slog.Warn("storage.GetNodeVspcList failed, sleep 3s.", "daaScore", daaScoreStart, "error", err.Error())
         time.Sleep(3000*time.Millisecond)
@@ -97,11 +100,16 @@ func scan() {
         slog.Info("explorer.checkRollbackNext", "start/rollback/last", strconv.FormatUint(daaScoreStart,10)+"/"+strconv.FormatUint(daaScoreRollback,10)+"/"+strconv.FormatUint(daaScoreLast,10), "mSecond", strconv.Itoa(int(mtsRollback)))
         return
     } else if vspcListNext == nil {
-        slog.Debug("storage.checkDaaScoreRollback empty.", "daaScore", daaScoreStart)
+        lenVspcListMaxAdj += 50
+        if lenVspcListMaxAdj > lenVspcListRuntimeMax {
+            lenVspcListMaxAdj = lenVspcListRuntimeMax
+        }
+        slog.Debug("storage.checkDaaScoreRollback empty.", "daaScore", daaScoreStart, "lenVspcListMax", lenVspcListMaxAdj)
         eRuntime.synced = false
         time.Sleep(1750*time.Millisecond)
         return
     }
+    lenVspcListMaxAdj = lenVspcListMax
     lenVspcNext = len(vspcListNext)
     slog.Debug("explorer.checkRollbackNext", "start/next", strconv.FormatUint(daaScoreStart,10)+"/"+strconv.FormatUint(vspcListNext[0].DaaScore,10))
     

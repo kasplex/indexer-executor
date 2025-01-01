@@ -43,11 +43,11 @@ func (opMethodSend OpMethodSend) ScriptCollectEx(index int, script *storage.Data
 }
 
 ////////////////////////////////
-func (opMethodSend OpMethodSend) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
+func (opMethodSend OpMethodSend) Validate(script *storage.DataScriptType, txId string, daaScore uint64, testnet bool) (bool) {
     if (!testnet && daaScore < 97539090) {
         return false
     }
-    if (script.From == "" || script.To == "" || script.Utxo == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick)) {
+    if (script.From == "" || script.To == "" || script.Utxo == "" || script.P != "KRC-20" || !ValidateTickTxId(&script.Tick)) {
         return false
     }
     script.Amt = ""
@@ -56,6 +56,7 @@ func (opMethodSend OpMethodSend) Validate(script *storage.DataScriptType, daaSco
     script.Pre = ""
     script.Dec = ""
     script.Mod = ""
+    script.Name = ""
     return true
 }
 

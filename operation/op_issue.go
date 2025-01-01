@@ -29,11 +29,11 @@ func (opMethodIssue OpMethodIssue) FeeLeast(daaScore uint64) (uint64) {
 func (opMethodIssue OpMethodIssue) ScriptCollectEx(index int, script *storage.DataScriptType, txData *storage.DataTransactionType, testnet bool) {}
 
 ////////////////////////////////
-func (opMethodIssue OpMethodIssue) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
+func (opMethodIssue OpMethodIssue) Validate(script *storage.DataScriptType, txId string, daaScore uint64, testnet bool) (bool) {
     if (!testnet && daaScore < 9999999999) {  // undetermined for mainnet
         return false
     }
-    if (script.From == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateAmount(&script.Amt)) {
+    if (script.From == "" || script.P != "KRC-20" || !ValidateTxId(&script.Tick) || !ValidateAmount(&script.Amt)) {
         return false
     }
     if script.To == "" {
@@ -46,6 +46,7 @@ func (opMethodIssue OpMethodIssue) Validate(script *storage.DataScriptType, daaS
     script.Utxo = ""
     script.Price = ""
     script.Mod = ""
+    script.Name = ""
     return true
 }
 

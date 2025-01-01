@@ -29,7 +29,7 @@ func (opMethodMint OpMethodMint) FeeLeast(daaScore uint64) (uint64) {
 func (opMethodMint OpMethodMint) ScriptCollectEx(index int, script *storage.DataScriptType, txData *storage.DataTransactionType, testnet bool) {}
 
 ////////////////////////////////
-func (opMethodMint OpMethodMint) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
+func (opMethodMint OpMethodMint) Validate(script *storage.DataScriptType, txId string, daaScore uint64, testnet bool) (bool) {
     if (script.From == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick)) {
         return false
     }
@@ -44,6 +44,7 @@ func (opMethodMint OpMethodMint) Validate(script *storage.DataScriptType, daaSco
     script.Utxo = ""
     script.Price = ""
     script.Mod = ""
+    script.Name = ""
     return true
 }
 

@@ -30,7 +30,7 @@ func (opMethodDeploy OpMethodDeploy) FeeLeast(daaScore uint64) (uint64) {
 func (opMethodDeploy OpMethodDeploy) ScriptCollectEx(index int, script *storage.DataScriptType, txData *storage.DataTransactionType, testnet bool) {}
 
 ////////////////////////////////
-func (opMethodDeploy OpMethodDeploy) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
+func (opMethodDeploy OpMethodDeploy) Validate(script *storage.DataScriptType, txId string, daaScore uint64, testnet bool) (bool) {
     if ((testnet || daaScore >= 9999999999) && script.Mod == "issue") {  // undetermined for mainnet / mode issue
         if (script.From == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateDec(&script.Dec, "8")) {
             return false
@@ -38,12 +38,15 @@ func (opMethodDeploy OpMethodDeploy) Validate(script *storage.DataScriptType, da
         if (script.Max != "0" && !ValidateAmount(&script.Max)) {
             return false
         }
+        script.Name = script.Tick
+        script.Tick = txId
         script.Lim = "0"
     } else {  // mode mint
         if (script.From == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateAmount(&script.Max) || !ValidateAmount(&script.Lim) || !ValidateDec(&script.Dec, "8")) {
             return false
         }
         script.Mod = ""
+        script.Name = ""
     }
     if !ValidateAmount(&script.Pre) {
         script.Pre = "0"
@@ -129,6 +132,9 @@ func (opMethodDeploy OpMethodDeploy) Do(index int, opData *storage.DataOperation
         OpMod: opData.OpScore,
         MtsAdd: opData.MtsAdd,
         MtsMod: opData.MtsAdd,
+    }
+    if opScript.Mod == "issue" {
+        stToken.Name = opScript.Name
     }
     stateMap.StateTokenMap[opScript.Tick] = stToken
     if opScript.Pre != "0" {
