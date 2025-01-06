@@ -32,13 +32,12 @@ func (opMethodDeploy OpMethodDeploy) ScriptCollectEx(index int, script *storage.
 ////////////////////////////////
 func (opMethodDeploy OpMethodDeploy) Validate(script *storage.DataScriptType, txId string, daaScore uint64, testnet bool) (bool) {
     if ((testnet || daaScore >= 9999999999) && script.Mod == "issue") {  // undetermined for mainnet / mode issue
-        if (script.From == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateDec(&script.Dec, "8")) {
+        if (script.From == "" || script.P != "KRC-20" || !ValidateTick(&script.Name) || !ValidateDec(&script.Dec, "8")) {
             return false
         }
         if (script.Max != "0" && !ValidateAmount(&script.Max)) {
             return false
         }
-        script.Name = script.Tick
         script.Tick = txId
         script.Lim = "0"
     } else {  // mode mint
@@ -57,6 +56,7 @@ func (opMethodDeploy OpMethodDeploy) Validate(script *storage.DataScriptType, tx
     script.Amt = ""
     script.Utxo = ""
     script.Price = ""
+    script.Sc = ""
     return true
 }
 

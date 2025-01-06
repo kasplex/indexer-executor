@@ -32,12 +32,13 @@ func (opMethodBlacklist OpMethodBlacklist) Validate(script *storage.DataScriptTy
     if (!testnet && daaScore < 9999999999) {  // undetermined for mainnet
         return false
     }
-    if (script.From == "" || script.To == "" || script.P != "KRC-20" || !ValidateTxId(&script.Tick)) {
+    if (script.From == "" || script.To == "" || script.P != "KRC-20" || !ValidateTxId(&script.Sc)) {
         return false
     }
     if (script.Mod != "add" && script.Mod != "remove") {
         return false
     }
+    script.Tick = script.Sc
     script.Amt = ""
     script.Max = ""
     script.Lim = ""
@@ -46,6 +47,7 @@ func (opMethodBlacklist OpMethodBlacklist) Validate(script *storage.DataScriptTy
     script.Utxo = ""
     script.Price = ""
     script.Name = ""
+    script.Sc = ""
     return true
 }
 
@@ -81,6 +83,7 @@ func (opMethodBlacklist OpMethodBlacklist) Do(index int, opData *storage.DataOpe
     }
     ////////////////////////////////
     keyBlacklist := opScript.Tick +"_"+ opScript.To
+    opScript.Name = stateMap.StateTokenMap[opScript.Tick].Name
     ////////////////////////////////
     if (opScript.Mod == "add" && stateMap.StateBlacklistMap[keyBlacklist] != nil) {
         opData.OpAccept = -1

@@ -32,6 +32,9 @@ func (opMethodChown OpMethodChown) Validate(script *storage.DataScriptType, txId
     if (!testnet && daaScore < 9999999999) {  // undetermined for mainnet
         return false
     }
+    if ValidateTxId(&script.Sc) {
+        script.Tick = script.Sc
+    }
     if (script.From == "" || script.To == "" || script.P != "KRC-20" || !ValidateTickTxId(&script.Tick)) {
         return false
     }
@@ -44,6 +47,7 @@ func (opMethodChown OpMethodChown) Validate(script *storage.DataScriptType, txId
     script.Price = ""
     script.Mod = ""
     script.Name = ""
+    script.Sc = ""
     return true
 }
 
@@ -73,6 +77,7 @@ func (opMethodChown OpMethodChown) Do(index int, opData *storage.DataOperationTy
     }
     ////////////////////////////////
     stToken := stateMap.StateTokenMap[opScript.Tick]
+    opScript.Name = stToken.Name
     ////////////////////////////////
     opData.StBefore = nil
     opData.StBefore = AppendStLineToken(opData.StBefore, opScript.Tick, stToken, true, false)

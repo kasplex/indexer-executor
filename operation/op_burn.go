@@ -32,6 +32,9 @@ func (opMethodBurn OpMethodBurn) Validate(script *storage.DataScriptType, txId s
     if (!testnet && daaScore < 9999999999) {  // undetermined for mainnet
         return false
     }
+    if ValidateTxId(&script.Sc) {
+        script.Tick = script.Sc
+    }
     if (script.From == "" || script.P != "KRC-20" || !ValidateTickTxId(&script.Tick) || !ValidateAmount(&script.Amt)) {
         return false
     }
@@ -44,6 +47,7 @@ func (opMethodBurn OpMethodBurn) Validate(script *storage.DataScriptType, txId s
     script.Price = ""
     script.Mod = ""
     script.Name = ""
+    script.Sc = ""
     return true
 }
 
@@ -68,10 +72,12 @@ func (opMethodBurn OpMethodBurn) Do(index int, opData *storage.DataOperationType
         return nil
     }
     ////////////////////////////////
+    opScript.Name = stateMap.StateTokenMap[opScript.Tick].Name
     keyBalance := opScript.From +"_"+ opScript.Tick
     stToken := stateMap.StateTokenMap[opScript.Tick]
     stBalance := stateMap.StateBalanceMap[keyBalance]
     nTickAffc := int64(0)
+    opScript.Name = stToken.Name
     ////////////////////////////////
     if stBalance == nil {
         opData.OpAccept = -1
