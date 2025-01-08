@@ -99,7 +99,12 @@ func (opMethodList OpMethodList) Do(index int, opData *storage.DataOperationType
         opData.OpError = "balance insuff"
         return nil
     }
-    uJson := `{"p":"krc-20","op":"send","tick":"` + strings.ToLower(opScript.Tick) + `"}`
+    uJson := ""
+    if stateMap.StateTokenMap[opScript.Tick].Mod == "issue" {
+        uJson = `{"p":"krc-20","op":"send","sc":"` + strings.ToLower(opScript.Tick) + `"}`
+    } else {
+        uJson = `{"p":"krc-20","op":"send","tick":"` + strings.ToLower(opScript.Tick) + `"}`
+    }
     uAddr, uScript := misc.MakeP2shKasplex(opData.ScriptSig, "", uJson, testnet)
     if dataUtxo[1] != uAddr {
         opData.OpAccept = -1
