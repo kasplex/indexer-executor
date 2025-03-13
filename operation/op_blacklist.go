@@ -32,13 +32,13 @@ func (opMethodBlacklist OpMethodBlacklist) Validate(script *storage.DataScriptTy
     if (!testnet && daaScore < 9999999999) {  // undetermined for mainnet
         return false
     }
-    if (script.From == "" || script.To == "" || script.P != "KRC-20" || !ValidateTxId(&script.Sc)) {
+    if (script.From == "" || script.To == "" || script.P != "KRC-20" || !ValidateTxId(&script.Ca)) {
         return false
     }
     if (script.Mod != "add" && script.Mod != "remove") {
         return false
     }
-    script.Tick = script.Sc
+    script.Tick = script.Ca
     script.Amt = ""
     script.Max = ""
     script.Lim = ""
@@ -47,7 +47,7 @@ func (opMethodBlacklist OpMethodBlacklist) Validate(script *storage.DataScriptTy
     script.Utxo = ""
     script.Price = ""
     script.Name = ""
-    script.Sc = ""
+    script.Ca = ""
     return true
 }
 

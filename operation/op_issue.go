@@ -33,13 +33,13 @@ func (opMethodIssue OpMethodIssue) Validate(script *storage.DataScriptType, txId
     if (!testnet && daaScore < 9999999999) {  // undetermined for mainnet
         return false
     }
-    if (script.From == "" || script.P != "KRC-20" || !ValidateTxId(&script.Sc) || !ValidateAmount(&script.Amt)) {
+    if (script.From == "" || script.P != "KRC-20" || !ValidateTxId(&script.Ca) || !ValidateAmount(&script.Amt)) {
         return false
     }
     if script.To == "" {
         script.To = script.From
     }
-    script.Tick = script.Sc
+    script.Tick = script.Ca
     script.Max = ""
     script.Lim = ""
     script.Pre = ""
@@ -48,7 +48,7 @@ func (opMethodIssue OpMethodIssue) Validate(script *storage.DataScriptType, txId
     script.Price = ""
     script.Mod = ""
     script.Name = ""
-    script.Sc = ""
+    script.Ca = ""
     return true
 }
 

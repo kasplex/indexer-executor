@@ -30,8 +30,8 @@ func (opMethodTransfer OpMethodTransfer) ScriptCollectEx(index int, script *stor
 
 ////////////////////////////////
 func (opMethodTransfer OpMethodTransfer) Validate(script *storage.DataScriptType, txId string, daaScore uint64, testnet bool) (bool) {
-    if ValidateTxId(&script.Sc) {
-        script.Tick = script.Sc
+    if ValidateTxId(&script.Ca) {
+        script.Tick = script.Ca
     }
     if (script.From == "" || script.To == "" || script.P != "KRC-20" || !ValidateTickTxId(&script.Tick) || !ValidateAmount(&script.Amt)) {
         return false
@@ -44,7 +44,7 @@ func (opMethodTransfer OpMethodTransfer) Validate(script *storage.DataScriptType
     script.Price = ""
     script.Mod = ""
     script.Name = ""
-    script.Sc = ""
+    script.Ca = ""
     return true
 }
 

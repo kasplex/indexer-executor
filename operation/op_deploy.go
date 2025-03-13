@@ -56,7 +56,7 @@ func (opMethodDeploy OpMethodDeploy) Validate(script *storage.DataScriptType, tx
     script.Amt = ""
     script.Utxo = ""
     script.Price = ""
-    script.Sc = ""
+    script.Ca = ""
     return true
 }
 

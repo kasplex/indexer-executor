@@ -47,7 +47,7 @@ func Init(cfgCassa config.CassaConfig, cfgRocks config.RocksConfig) {
     }
     sRuntime.cassa.Consistency = gocql.LocalQuorum
     sRuntime.cassa.DisableInitialHostLookup = false
-    sRuntime.cassa.NumConns = nBatchMaxCassa
+    sRuntime.cassa.NumConns = numConns
     sRuntime.cassa.Keyspace = sRuntime.cfgCassa.Space
     sRuntime.sessionCassa, err = sRuntime.cassa.CreateSession()
     if err != nil {
@@ -58,7 +58,8 @@ func Init(cfgCassa config.CassaConfig, cfgRocks config.RocksConfig) {
     for _, cqln := range cqlnInitTable {
         err = sRuntime.sessionCassa.Query(cqln).Exec()
         if err != nil {
-            if strings.HasSuffix(err.Error(), "conflicts with an existing column") {
+            msg := err.Error()
+            if strings.HasSuffix(msg, "conflicts with an existing column") || strings.HasSuffix(msg, "already exists") {
                 continue
             }
             log.Fatalln("storage.Init fatal:", err.Error())

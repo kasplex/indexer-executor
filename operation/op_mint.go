@@ -45,7 +45,7 @@ func (opMethodMint OpMethodMint) Validate(script *storage.DataScriptType, txId s
     script.Price = ""
     script.Mod = ""
     script.Name = ""
-    script.Sc = ""
+    script.Ca = ""
     return true
 }
 

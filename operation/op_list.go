@@ -39,8 +39,8 @@ func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, txId s
     if (!testnet && daaScore < 97539090) {
         return false
     }
-    if ValidateTxId(&script.Sc) {
-        script.Tick = script.Sc
+    if ValidateTxId(&script.Ca) {
+        script.Tick = script.Ca
     }
     if (script.From == "" || script.Utxo == "" || script.P != "KRC-20" || !ValidateTickTxId(&script.Tick) || !ValidateAmount(&script.Amt)) {
         return false
@@ -53,7 +53,7 @@ func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, txId s
     script.Price = ""
     script.Mod = ""
     script.Name = ""
-    script.Sc = ""
+    script.Ca = ""
     return true
 }
 
@@ -101,7 +101,7 @@ func (opMethodList OpMethodList) Do(index int, opData *storage.DataOperationType
     }
     uScript := ""
     uJson1 := `{"p":"krc-20","op":"send","tick":"` + strings.ToLower(opScript.Tick) + `"}`
-    uJson2 := `{"p":"krc-20","op":"send","sc":"` + strings.ToLower(opScript.Tick) + `"}`
+    uJson2 := `{"p":"krc-20","op":"send","ca":"` + strings.ToLower(opScript.Tick) + `"}`
     uAddr1, uScript1 := misc.MakeP2shKasplex(opData.ScriptSig, "", uJson1, testnet)
     uAddr2, uScript2 := misc.MakeP2shKasplex(opData.ScriptSig, "", uJson2, testnet)
     if dataUtxo[1] == uAddr1 {

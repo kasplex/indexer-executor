@@ -37,7 +37,7 @@ type DataScriptType struct {
     Price string `json:"price,omitempty"`
     Mod string `json:"mod,omitempty"`
     Name string `json:"name,omitempty"`
-    Sc string `json:"sc,omitempty"`
+    Ca string `json:"ca,omitempty"`
     // ...
 }
 

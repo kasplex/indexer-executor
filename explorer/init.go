@@ -43,8 +43,8 @@ func Init(ctx context.Context, wg *sync.WaitGroup, cfg config.StartupConfig, tes
     eRuntime.testnet = testnet
     if eRuntime.cfg.Hysteresis < 0 {
         eRuntime.cfg.Hysteresis = 0
-    } else if eRuntime.cfg.Hysteresis > 10 {
-        eRuntime.cfg.Hysteresis = 10
+    } else if eRuntime.cfg.Hysteresis > 1000 {
+        eRuntime.cfg.Hysteresis = 1000
     }
     if (!testnet || len(eRuntime.cfg.DaaScoreRange) <= 0) {
         eRuntime.cfg.DaaScoreRange = daaScoreRange

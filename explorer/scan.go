@@ -11,10 +11,10 @@ import (
 )
 
 ////////////////////////////////
-const lenVspcListMax = 200
-const lenVspcListRuntimeMax = 1150
-const lenVspcCheck = 23
-const lenRollbackListRuntimeMax = 350
+const lenVspcListMax = 1230
+const lenVspcListRuntimeMax = 3350
+const lenVspcCheck = 189
+const lenRollbackListRuntimeMax = 1550
 
 ////////////////////////////////
 var lenVspcListMaxAdj = lenVspcListMax
@@ -56,7 +56,7 @@ func scan() {
         return
     }
     vspcListNext = vspcListNext[:lenVspcNext]
-    slog.Info("storage.GetNodeVspcList", "daaScore", daaScoreStart, "lenBlock/mSecond", strconv.Itoa(lenVspcNext)+"/"+strconv.Itoa(int(mtsBatchVspc)), "synced", eRuntime.synced)
+    slog.Info("storage.GetNodeVspcList", "daaScore", daaScoreStart, "lenBlock/mSecond", strconv.Itoa(lenVspcNext)+"/"+strconv.Itoa(int(mtsBatchVspc)), "lenVspcListMax", lenVspcListMaxAdj, "synced", eRuntime.synced)
 
     // Check vspc list if need rollback.
     daaScoreRollback, vspcListNext := checkRollbackNext(eRuntime.vspcList, vspcListNext, daaScoreStart)
@@ -191,7 +191,7 @@ func scan() {
     
     // Update the runtime data.
     eRuntime.synced = false
-    if (lenVspcNext < 50) {
+    if (lenVspcNext < 99) {
         eRuntime.synced = true
     }
     storage.SetRuntimeSynced(eRuntime.synced, eRuntime.opScoreLast, vspcListNext[lenVspcNext-1].DaaScore)
@@ -212,7 +212,7 @@ func scan() {
     mtsLoop := time.Now().UnixMilli() - mtss
     slog.Info("explorer.scan", "lenRuntimeVspc", len(eRuntime.vspcList), "lenRuntimeRollback", len(eRuntime.rollbackList), "lenOperation", lenOpData, "mSecondLoop", mtsLoop)
     if (eRuntime.synced) {
-        mtsLoop = 1650 - mtsLoop
+        mtsLoop = 1150 - mtsLoop
         if mtsLoop <=0 {
             return
         }

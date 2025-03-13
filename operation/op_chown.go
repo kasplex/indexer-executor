@@ -32,8 +32,8 @@ func (opMethodChown OpMethodChown) Validate(script *storage.DataScriptType, txId
     if (!testnet && daaScore < 9999999999) {  // undetermined for mainnet
         return false
     }
-    if ValidateTxId(&script.Sc) {
-        script.Tick = script.Sc
+    if ValidateTxId(&script.Ca) {
+        script.Tick = script.Ca
     }
     if (script.From == "" || script.To == "" || script.P != "KRC-20" || !ValidateTickTxId(&script.Tick)) {
         return false
@@ -47,7 +47,7 @@ func (opMethodChown OpMethodChown) Validate(script *storage.DataScriptType, txId
     script.Price = ""
     script.Mod = ""
     script.Name = ""
-    script.Sc = ""
+    script.Ca = ""
     return true
 }
 

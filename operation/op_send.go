@@ -47,8 +47,8 @@ func (opMethodSend OpMethodSend) Validate(script *storage.DataScriptType, txId s
     if (!testnet && daaScore < 97539090) {
         return false
     }
-    if ValidateTxId(&script.Sc) {
-        script.Tick = script.Sc
+    if ValidateTxId(&script.Ca) {
+        script.Tick = script.Ca
     }
     if (script.From == "" || script.To == "" || script.Utxo == "" || script.P != "KRC-20" || !ValidateTickTxId(&script.Tick)) {
         return false
@@ -60,7 +60,7 @@ func (opMethodSend OpMethodSend) Validate(script *storage.DataScriptType, txId s
     script.Dec = ""
     script.Mod = ""
     script.Name = ""
-    script.Sc = ""
+    script.Ca = ""
     return true
 }
 
