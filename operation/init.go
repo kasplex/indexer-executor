@@ -1,4 +1,3 @@
-
 ////////////////////////////////
 package operation
 
@@ -398,4 +397,8 @@ func ValidationUint(value *string, def string) (bool) {
     return true
 }
 
-// ...
+// Register KRC-721 operations
+import _ "kasplex-executor/operation/op_krc721_deploy"
+import _ "kasplex-executor/operation/op_krc721_mint"
+import _ "kasplex-executor/operation/op_krc721_transfer"
+import _ "kasplex-executor/operation/op_krc721_burn"

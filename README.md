@@ -21,5 +21,14 @@ Executor's main responsibilities include but are not limited to:
 
 Through these functionalities, Executor aims to provide users with a highly efficient, accurate, and secure blockchain experience.
 
+### 1.4 KRC-721 Support
+
+- **KRC-721 Tokens**: Executor now supports KRC-721 tokens, which are non-fungible tokens (NFTs) on the Kaspa blockchain.
+- **KRC-721 Operations**: The following KRC-721 operations are supported:
+  - Deploy: Deploy a new KRC-721 token contract.
+  - Mint: Mint new KRC-721 tokens.
+  - Transfer: Transfer KRC-721 tokens between addresses.
+  - Burn: Burn KRC-721 tokens.
+
 # 2. Installation
 For installation instructions, please see our [Installation Guide](INSTALLATION.md).

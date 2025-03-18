@@ -1,4 +1,3 @@
-
 ////////////////////////////////
 package main
 
@@ -16,6 +15,7 @@ import (
     "kasplex-executor/config"
     "kasplex-executor/storage"
     "kasplex-executor/explorer"
+    "kasplex-executor/operation"
 )
 
 ////////////////////////////////
@@ -84,6 +84,14 @@ func main() {
     if (!down) {
         explorer.Init(ctx, wg, cfg.Startup, cfg.Testnet)
         go explorer.Run()
+    }
+    
+    // Initialize KRC-721 related settings
+    if cfg.KRC721Enabled {
+        // Add any necessary initialization code for KRC-721 here
+        // For example, you might want to initialize specific data structures or services
+        // related to KRC-721 tokens.
+        operation.InitKRC721()
     }
     
     // Waiting

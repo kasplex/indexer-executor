@@ -16,5 +16,7 @@
         "path": "./data"
     },
     "testnet": false,
-    "debug": 2
+    "debug": 2,
+    "krc721Enabled": true,
+    "krc721ContractAddress": "kaspa:qr3w4e5t6y7u8i9o0p"
 }

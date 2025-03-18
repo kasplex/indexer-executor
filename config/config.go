@@ -1,4 +1,3 @@
-
 ////////////////////////////////
 package config
 
@@ -31,6 +30,8 @@ type Config struct {
     Rocksdb RocksConfig `json:"rocksdb"`
     Debug int `json:"debug"`
     Testnet bool `json:"testnet"`
+    KRC721Enabled bool `json:"krc721Enabled"`
+    KRC721ContractAddress string `json:"krc721ContractAddress"`
 }
 
 ////////////////////////////////
