@@ -29,7 +29,7 @@ func (opMethodChown OpMethodChown) ScriptCollectEx(index int, script *storage.Da
 
 ////////////////////////////////
 func (opMethodChown OpMethodChown) Validate(script *storage.DataScriptType, txId string, daaScore uint64, testnet bool) (bool) {
-    if (!testnet && daaScore < 9999999999) {  // undetermined for mainnet
+    if (!testnet && daaScore < 110165000) {
         return false
     }
     if ValidateTxId(&script.Ca) {

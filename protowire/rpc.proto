@@ -27,15 +27,15 @@ message RpcBlock {
 message RpcBlockHeader {
   uint32 version = 1;
   //repeated RpcBlockLevelParents parents = 12;
-  string hashMerkleRoot = 3;
+  //string hashMerkleRoot = 3;
   string acceptedIdMerkleRoot = 4;
-  string utxoCommitment = 5;
+  //string utxoCommitment = 5;
   int64 timestamp = 6;
-  uint32 bits = 7;
-  uint64 nonce = 8;
+  //uint32 bits = 7;
+  //uint64 nonce = 8;
   uint64 daaScore = 9;
-  string blueWork = 10;
-  string pruningPoint = 14;
+  //string blueWork = 10;
+  //string pruningPoint = 14;
   uint64 blueScore = 13;
 }
 
@@ -45,15 +45,15 @@ message RpcBlockLevelParents {
 
 message RpcBlockVerboseData{
   string hash = 1;
-  double difficulty = 11;
+  //double difficulty = 11;
   string selectedParentHash = 13;
   //repeated string transactionIds = 14;
-  bool isHeaderOnly = 15;
-  uint64 blueScore = 16;
+  //bool isHeaderOnly = 15;
+  //uint64 blueScore = 16;
   //repeated string childrenHashes = 17;
   //repeated string mergeSetBluesHashes = 18;
   //repeated string mergeSetRedsHashes = 19;
-  bool isChainBlock = 20;
+  //bool isChainBlock = 20;
 }
 
 message RpcTransaction {

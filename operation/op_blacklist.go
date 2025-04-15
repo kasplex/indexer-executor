@@ -29,7 +29,7 @@ func (opMethodBlacklist OpMethodBlacklist) ScriptCollectEx(index int, script *st
 
 ////////////////////////////////
 func (opMethodBlacklist OpMethodBlacklist) Validate(script *storage.DataScriptType, txId string, daaScore uint64, testnet bool) (bool) {
-    if (!testnet && daaScore < 9999999999) {  // undetermined for mainnet
+    if (!testnet && daaScore < 110165000) {
         return false
     }
     if (script.From == "" || script.To == "" || script.P != "KRC-20" || !ValidateTxId(&script.Ca)) {
