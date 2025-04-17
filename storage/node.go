@@ -35,7 +35,9 @@ func GetNodeVspcList(daaScoreStart uint64, lenBlock int) ([]DataVspcType, int64,
                 return err
             }
             txIdList := strings.Split(txId, ",")
-            sort.Strings(txIdList)
+            if daaScore < 110165000 {
+                sort.Strings(txIdList)
+            }
             mutex.Lock()
             vspcMap[daaScore] = &DataVspcType{
                 DaaScore: daaScore,

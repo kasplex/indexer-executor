@@ -35,6 +35,9 @@ type DataScriptType struct {
     Amt string `json:"amt,omitempty"`
     Utxo string `json:"utxo,omitempty"`
     Price string `json:"price,omitempty"`
+    Mod string `json:"mod,omitempty"`
+    Name string `json:"name,omitempty"`
+    Ca string `json:"ca,omitempty"`
     // ...
 }
 
@@ -82,8 +85,10 @@ type StateTokenMetaType struct {
     Lim string `json:"lim,omitempty"`
     Pre string `json:"pre,omitempty"`
     Dec int `json:"dec,omitempty"`
+    Mod string `json:"mod,omitempty"`
     From string `json:"from,omitempty"`
     To string `json:"to,omitempty"`
+    Name string `json:"name,omitempty"`
     TxId string `json:"txid,omitempty"`
     OpAdd uint64 `json:"opadd,omitempty"`
     MtsAdd int64 `json:"mtsadd,omitempty"`
@@ -96,9 +101,12 @@ type StateTokenType struct {
     Lim string `json:"lim,omitempty"`
     Pre string `json:"pre,omitempty"`
     Dec int `json:"dec,omitempty"`
+    Mod string `json:"mod,omitempty"`
     From string `json:"from,omitempty"`
     To string `json:"to,omitempty"`
     Minted string `json:"minted,omitempty"`
+    Burned string `json:"burned,omitempty"`
+    Name string `json:"name,omitempty"`
     TxId string `json:"txid,omitempty"`
     OpAdd uint64 `json:"opadd,omitempty"`
     OpMod uint64 `json:"opmod,omitempty"`
@@ -129,6 +137,13 @@ type StateMarketType struct {
 }
 
 ////////////////////////////////
+type StateBlacklistType struct {
+    Tick string `json:"tick,omitempty"`
+    Address string `json:"address,omitempty"`
+    OpAdd uint64 `json:"opadd,omitempty"`
+}
+
+////////////////////////////////
 // type StateXxx ...
 
 ////////////////////////////////
@@ -136,6 +151,7 @@ type DataStateMapType struct {
     StateTokenMap map[string]*StateTokenType `json:"statetokenmap,omitempty"`
     StateBalanceMap map[string]*StateBalanceType `json:"statebalancemap,omitempty"`
     StateMarketMap map[string]*StateMarketType `json:"statemarketmap,omitempty"`
+    StateBlacklistMap map[string]*StateBlacklistType `json:"stateblacklistmap,omitempty"`
     // StateXxx ...
 }
 

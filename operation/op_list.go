@@ -35,11 +35,14 @@ func (opMethodList OpMethodList) ScriptCollectEx(index int, script *storage.Data
 }
 
 ////////////////////////////////
-func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
+func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, txId string, daaScore uint64, testnet bool) (bool) {
     if (!testnet && daaScore < 97539090) {
         return false
     }
-    if (script.From == "" || script.Utxo == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateAmount(&script.Amt)) {
+    if ValidateTxId(&script.Ca) {
+        script.Tick = script.Ca
+    }
+    if (script.From == "" || script.Utxo == "" || script.P != "KRC-20" || !ValidateTickTxId(&script.Tick) || !ValidateAmount(&script.Amt)) {
         return false
     }
     script.To = ""
@@ -48,6 +51,9 @@ func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, daaSco
     script.Pre = ""
     script.Dec = ""
     script.Price = ""
+    script.Mod = ""
+    script.Name = ""
+    script.Ca = ""
     return true
 }
 
@@ -55,6 +61,7 @@ func (opMethodList OpMethodList) Validate(script *storage.DataScriptType, daaSco
 func (opMethodList OpMethodList) PrepareStateKey(opScript *storage.DataScriptType, stateMap storage.DataStateMapType) {
     stateMap.StateTokenMap[opScript.Tick] = nil
     stateMap.StateBalanceMap[opScript.From+"_"+opScript.Tick] = nil
+    stateMap.StateBlacklistMap[opScript.Tick+"_"+opScript.From] = nil
 }
 
 ////////////////////////////////
@@ -66,11 +73,17 @@ func (opMethodList OpMethodList) Do(index int, opData *storage.DataOperationType
         opData.OpError = "tick not found"
         return nil
     }
+    if stateMap.StateBlacklistMap[opScript.Tick+"_"+opScript.From] != nil {
+        opData.OpAccept = -1
+        opData.OpError = "blacklist"
+        return nil
+    }
     ////////////////////////////////
     dataUtxo := strings.Split(opScript.Utxo, "_")
     keyMarket := opScript.Tick +"_"+ opScript.From +"_"+ dataUtxo[0]
     keyBalance := opScript.From +"_"+ opScript.Tick
     stBalance := stateMap.StateBalanceMap[keyBalance]
+    opScript.Name = stateMap.StateTokenMap[opScript.Tick].Name
     ////////////////////////////////
     if stBalance == nil {
         opData.OpAccept = -1
@@ -86,9 +99,16 @@ func (opMethodList OpMethodList) Do(index int, opData *storage.DataOperationType
         opData.OpError = "balance insuff"
         return nil
     }
-    uJson := `{"p":"krc-20","op":"send","tick":"` + strings.ToLower(opScript.Tick) + `"}`
-    uAddr, uScript := misc.MakeP2shKasplex(opData.ScriptSig, "", uJson, testnet)
-    if dataUtxo[1] != uAddr {
+    uScript := ""
+    uJson1 := `{"p":"krc-20","op":"send","tick":"` + strings.ToLower(opScript.Tick) + `"}`
+    uJson2 := `{"p":"krc-20","op":"send","ca":"` + strings.ToLower(opScript.Tick) + `"}`
+    uAddr1, uScript1 := misc.MakeP2shKasplex(opData.ScriptSig, "", uJson1, testnet)
+    uAddr2, uScript2 := misc.MakeP2shKasplex(opData.ScriptSig, "", uJson2, testnet)
+    if dataUtxo[1] == uAddr1 {
+        uScript = uScript1
+    } else if (dataUtxo[1] == uAddr2 && stateMap.StateTokenMap[opScript.Tick].Mod == "issue") {
+        uScript = uScript2
+    } else {
         opData.OpAccept = -1
         opData.OpError = "address invalid"
         return nil

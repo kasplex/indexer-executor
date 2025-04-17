@@ -34,7 +34,7 @@ type Config struct {
 }
 
 ////////////////////////////////
-const Version = "2.02.1130"
+const Version = "2.03.250415"
 
 ////////////////////////////////
 func Load(cfg *Config) {

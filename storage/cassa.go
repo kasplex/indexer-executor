@@ -11,11 +11,12 @@ import (
 )
 
 ////////////////////////////////
+const numConns = 10
 const inMaxCassa = 10
 const nQueryCassa = 5
-const nBatchMaxCassa = 20
-const mtsDelayExecuteCassa = 50
-const mtsDelayQueryCassa = 20
+const nBatchMaxCassa = 100
+const mtsDelayExecuteCassa = 10
+const mtsDelayQueryCassa = 5
 
 ////////////////////////////////
 var mtsBatchLastCassa = int64(0)

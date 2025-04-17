@@ -9,6 +9,7 @@ import (
     "strings"
     //"log/slog"
     "math/big"
+    "encoding/hex"
     "golang.org/x/crypto/blake2b"
     "kasplex-executor/storage"
 )
@@ -16,7 +17,7 @@ import (
 ////////////////////////////////
 type OpMethod interface {
     ScriptCollectEx(int, *storage.DataScriptType, *storage.DataTransactionType, bool)
-    Validate(*storage.DataScriptType, uint64, bool) (bool)
+    Validate(*storage.DataScriptType, string, uint64, bool) (bool)
     FeeLeast(uint64) (uint64)
     PrepareStateKey(*storage.DataScriptType, storage.DataStateMapType)
     Do(int, *storage.DataOperationType, storage.DataStateMapType, bool) (error)
@@ -84,6 +85,7 @@ func PrepareStateBatch(opDataList []storage.DataOperationType) (storage.DataStat
         StateTokenMap: make(map[string]*storage.StateTokenType),
         StateBalanceMap: make(map[string]*storage.StateBalanceType),
         StateMarketMap: make(map[string]*storage.StateMarketType),
+        StateBlacklistMap: make(map[string]*storage.StateBlacklistType),
         // StateXxx ...
     }
     for _, opData := range opDataList{
@@ -100,6 +102,10 @@ func PrepareStateBatch(opDataList []storage.DataOperationType) (storage.DataStat
         return storage.DataStateMapType{}, 0, err
     }
     _, err = storage.GetStateMarketMap(stateMap.StateMarketMap)
+    if err != nil {
+        return storage.DataStateMapType{}, 0, err
+    }
+    _, err = storage.GetStateBlacklistMap(stateMap.StateBlacklistMap)
     if err != nil {
         return storage.DataStateMapType{}, 0, err
     }
@@ -178,9 +184,9 @@ func MakeStLineToken(key string, stToken *storage.StateTokenType, isDeploy bool)
     stLine += ","
     strDec := strconv.Itoa(stToken.Dec)
     opScore := stToken.OpMod
-    if isDeploy {
+    /*if isDeploy {
         opScore = stToken.OpAdd
-    }
+    }*/
     strOpscore := strconv.FormatUint(opScore, 10)
     if isDeploy {
         stLine += stToken.Max + ","
@@ -192,6 +198,11 @@ func MakeStLineToken(key string, stToken *storage.StateTokenType, isDeploy bool)
     }
     stLine += stToken.Minted + ","
     stLine += strOpscore
+    if stToken.Mod == "issue" {
+        stLine += "," + stToken.Mod
+        stLine += "," + stToken.Burned
+        stLine += "," + stToken.Name
+    }
     return stLine
 }
 func AppendStLineToken(stLine []string, key string, stToken *storage.StateTokenType, isDeploy bool, isAfter bool) ([]string) {
@@ -284,6 +295,37 @@ func AppendStLineMarket(stLine []string, key string, stMarket *storage.StateMark
 }
 
 ////////////////////////////////
+func MakeStLineBlacklist(key string, stBlacklist *storage.StateBlacklistType) (string) {
+    stLine := storage.KeyPrefixStateBlacklist + key
+    if stBlacklist == nil {
+        return stLine
+    }
+    stLine += ","
+    strOpscore := strconv.FormatUint(stBlacklist.OpAdd, 10)
+    stLine += strOpscore
+    return stLine
+}
+func AppendStLineBlacklist(stLine []string, key string, stBlacklist *storage.StateBlacklistType, isAfter bool) ([]string) {
+    keyFull := storage.KeyPrefixStateBlacklist + key
+    iExists := -1
+    list := []string{}
+    for i, line := range stLine {
+        list = strings.SplitN(line, ",", 2)
+        if list[0] == keyFull {
+            iExists = i
+            break
+        }
+    }
+    if iExists < 0 {
+        return append(stLine, MakeStLineBlacklist(key, stBlacklist))
+    }
+    if isAfter {
+        stLine[iExists] = MakeStLineBlacklist(key, stBlacklist)
+    }
+    return stLine
+}
+
+////////////////////////////////
 func AppendSsInfoTickAffc(tickAffc []string, key string, value int64) ([]string) {
     iExists := -1
     valueBefore := int64(0)
@@ -336,6 +378,25 @@ func ValidateTick(tick *string) (bool) {
         }
     }
     return true
+}
+////////////////////////////////
+func ValidateTxId(tick *string) (bool) {
+    *tick = strings.ToLower(*tick)
+    if len(*tick) != 64 {
+        return false
+    }
+    _, err := hex.DecodeString(*tick)
+    if err != nil {
+        return false
+    }
+    return true
+}
+////////////////////////////////
+func ValidateTickTxId(tick *string) (bool) {
+    if len(*tick) < 64 {
+        return ValidateTick(tick)
+    }
+    return ValidateTxId(tick)
 }
 ////////////////////////////////
 func ValidateAmount(amount *string) (bool) {

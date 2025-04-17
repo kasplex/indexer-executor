@@ -29,8 +29,11 @@ func (opMethodTransfer OpMethodTransfer) FeeLeast(daaScore uint64) (uint64) {
 func (opMethodTransfer OpMethodTransfer) ScriptCollectEx(index int, script *storage.DataScriptType, txData *storage.DataTransactionType, testnet bool) {}
 
 ////////////////////////////////
-func (opMethodTransfer OpMethodTransfer) Validate(script *storage.DataScriptType, daaScore uint64, testnet bool) (bool) {
-    if (script.From == "" || script.To == "" || script.P != "KRC-20" || !ValidateTick(&script.Tick) || !ValidateAmount(&script.Amt)) {
+func (opMethodTransfer OpMethodTransfer) Validate(script *storage.DataScriptType, txId string, daaScore uint64, testnet bool) (bool) {
+    if ValidateTxId(&script.Ca) {
+        script.Tick = script.Ca
+    }
+    if (script.From == "" || script.To == "" || script.P != "KRC-20" || !ValidateTickTxId(&script.Tick) || !ValidateAmount(&script.Amt)) {
         return false
     }
     script.Max = ""
@@ -39,6 +42,9 @@ func (opMethodTransfer OpMethodTransfer) Validate(script *storage.DataScriptType
     script.Dec = ""
     script.Utxo = ""
     script.Price = ""
+    script.Mod = ""
+    script.Name = ""
+    script.Ca = ""
     return true
 }
 
@@ -47,6 +53,7 @@ func (opMethodTransfer OpMethodTransfer) PrepareStateKey(opScript *storage.DataS
     stateMap.StateTokenMap[opScript.Tick] = nil
     stateMap.StateBalanceMap[opScript.From+"_"+opScript.Tick] = nil
     stateMap.StateBalanceMap[opScript.To+"_"+opScript.Tick] = nil
+    stateMap.StateBlacklistMap[opScript.Tick+"_"+opScript.From] = nil
 }
 
 ////////////////////////////////
@@ -56,6 +63,11 @@ func (opMethodTransfer OpMethodTransfer) Do(index int, opData *storage.DataOpera
     if stateMap.StateTokenMap[opScript.Tick] == nil {
         opData.OpAccept = -1
         opData.OpError = "tick not found"
+        return nil
+    }
+    if stateMap.StateBlacklistMap[opScript.Tick+"_"+opScript.From] != nil {
+        opData.OpAccept = -1
+        opData.OpError = "blacklist"
         return nil
     }
     if (opScript.From == opScript.To || !misc.VerifyAddr(opScript.To, testnet)) {
@@ -69,6 +81,7 @@ func (opMethodTransfer OpMethodTransfer) Do(index int, opData *storage.DataOpera
     stBalanceFrom := stateMap.StateBalanceMap[keyBalanceFrom]
     stBalanceTo := stateMap.StateBalanceMap[keyBalanceTo]
     nTickAffc := int64(0)
+    opScript.Name = stateMap.StateTokenMap[opScript.Tick].Name
     ////////////////////////////////
     if stBalanceFrom == nil {
         opData.OpAccept = -1
@@ -119,8 +132,8 @@ func (opMethodTransfer OpMethodTransfer) Do(index int, opData *storage.DataOpera
     balanceToTotal := balanceBig.Text(10)
     ////////////////////////////////
     opData.SsInfo.TickAffc = AppendSsInfoTickAffc(opData.SsInfo.TickAffc, opScript.Tick, nTickAffc)
-    opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, opScript.From+"_"+opScript.Tick, balanceFromTotal)
-    opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, opScript.To+"_"+opScript.Tick, balanceToTotal)
+    opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, keyBalanceFrom, balanceFromTotal)
+    opData.SsInfo.AddressAffc = AppendSsInfoAddressAffc(opData.SsInfo.AddressAffc, keyBalanceTo, balanceToTotal)
     ////////////////////////////////
     opData.StAfter = nil
     opData.StAfter = AppendStLineBalance(opData.StAfter, keyBalanceFrom, stBalanceFrom, true)

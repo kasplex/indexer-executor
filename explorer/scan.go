@@ -11,10 +11,14 @@ import (
 )
 
 ////////////////////////////////
-const lenVspcListMax = 200
-const lenVspcListRuntimeMax = 950
-const lenVspcCheck = 23
-const lenRollbackListRuntimeMax = 350
+const lenVspcListMax = 1200
+const lenVspcListRuntimeMax = 3600
+const lenVspcCheck = 200
+const lenRollbackListRuntimeMax = 3600
+
+////////////////////////////////
+var lenVspcListMaxAdj = lenVspcListMax
+var lenVspcBatch = uint64(lenVspcListMax - lenVspcCheck)
 
 ////////////////////////////////
 func scan() {
@@ -36,22 +40,24 @@ func scan() {
     }
     //_, daaScoreStart = checkDaaScoreRange(daaScoreStart)
     // Get next vspc data list from cluster db.
-    vspcListNext, mtsBatchVspc, err := storage.GetNodeVspcList(daaScoreStart, lenVspcListMax)
+    vspcListNext, mtsBatchVspc, err := storage.GetNodeVspcList(daaScoreStart, lenVspcListMaxAdj+5)
     if err != nil {
         slog.Warn("storage.GetNodeVspcList failed, sleep 3s.", "daaScore", daaScoreStart, "error", err.Error())
         time.Sleep(3000*time.Millisecond)
         return
     }
-    // Ignore the last reserved vspc data, reduce the probability of vspc-reorg.
+    // Ignore the last reserved vspc data if synced, reduce the probability of vspc-reorg.
     lenVspcNext := len(vspcListNext)
-    lenVspcNext -= eRuntime.cfg.Hysteresis
+    if (eRuntime.synced) {
+        lenVspcNext -= eRuntime.cfg.Hysteresis
+    }
     if lenVspcNext <= 0 {
         slog.Debug("storage.GetNodeVspcList empty.", "daaScore", daaScoreStart)
         time.Sleep(1550*time.Millisecond)
         return
     }
     vspcListNext = vspcListNext[:lenVspcNext]
-    slog.Info("storage.GetNodeVspcList", "daaScore", daaScoreStart, "lenBlock/mSecond", strconv.Itoa(lenVspcNext)+"/"+strconv.Itoa(int(mtsBatchVspc)), "synced", eRuntime.synced)
+    slog.Info("storage.GetNodeVspcList", "daaScore", daaScoreStart, "lenBlock/mSecond", strconv.Itoa(lenVspcNext)+"/"+strconv.Itoa(int(mtsBatchVspc)), "lenVspcListMax", lenVspcListMaxAdj, "synced", eRuntime.synced)
 
     // Check vspc list if need rollback.
     daaScoreRollback, vspcListNext := checkRollbackNext(eRuntime.vspcList, vspcListNext, daaScoreStart)
@@ -95,18 +101,35 @@ func scan() {
         slog.Info("explorer.checkRollbackNext", "start/rollback/last", strconv.FormatUint(daaScoreStart,10)+"/"+strconv.FormatUint(daaScoreRollback,10)+"/"+strconv.FormatUint(daaScoreLast,10), "mSecond", strconv.Itoa(int(mtsRollback)))
         return
     } else if vspcListNext == nil {
-        slog.Debug("storage.checkDaaScoreRollback empty.", "daaScore", daaScoreStart)
+        lenVspcListMaxAdj += 50
+        if lenVspcListMaxAdj > lenVspcListRuntimeMax {
+            lenVspcListMaxAdj = lenVspcListRuntimeMax
+        }
+        slog.Debug("storage.checkDaaScoreRollback empty.", "daaScore", daaScoreStart, "lenVspcListMax", lenVspcListMaxAdj)
+        eRuntime.synced = false
         time.Sleep(1750*time.Millisecond)
         return
     }
+    lenVspcListMaxAdj = lenVspcListMax
     lenVspcNext = len(vspcListNext)
     slog.Debug("explorer.checkRollbackNext", "start/next", strconv.FormatUint(daaScoreStart,10)+"/"+strconv.FormatUint(vspcListNext[0].DaaScore,10))
     
     // Extract and get the transaction list.
+    daaScoreNextBatch := uint64(0)
+    vspcRemoveIndex := 0
     txDataList := []storage.DataTransactionType{}
-    for _, vspc := range vspcListNext {
+    for i, vspc := range vspcListNext {
+        if vspc.DaaScore <= vspcLast.DaaScore {
+            continue
+        }
+        if daaScoreNextBatch == 0 {
+            daaScoreNextBatch = (vspc.DaaScore/lenVspcBatch+1) * lenVspcBatch
+        } else if vspc.DaaScore >= daaScoreNextBatch {
+            vspcRemoveIndex = i
+            break
+        }
         passed, _ := checkDaaScoreRange(vspc.DaaScore)
-        if (!passed || vspc.DaaScore <= vspcLast.DaaScore) {
+        if !passed {
             continue
         }
         for _, txId := range vspc.TxIdList {
@@ -117,6 +140,10 @@ func scan() {
             })
         }
     }
+    if vspcRemoveIndex > 0 {
+        vspcListNext = vspcListNext[:vspcRemoveIndex]
+    }
+    lenVspcNext = len(vspcListNext)
     // Get the transaction data list from cluster db.
     lenTxData := len(txDataList)
     txDataList, mtsBatchTx, err := storage.GetNodeTransactionDataList(txDataList)
@@ -180,7 +207,7 @@ func scan() {
     
     // Update the runtime data.
     eRuntime.synced = false
-    if (lenVspcNext < 50) {
+    if (lenVspcNext < 99) {
         eRuntime.synced = true
     }
     storage.SetRuntimeSynced(eRuntime.synced, eRuntime.opScoreLast, vspcListNext[lenVspcNext-1].DaaScore)
@@ -191,7 +218,14 @@ func scan() {
     }
     storage.SetRuntimeVspcLast(eRuntime.vspcList)
     eRuntime.rollbackList = append(eRuntime.rollbackList, rollback)
-    lenStart = len(eRuntime.rollbackList) - lenRollbackListRuntimeMax
+    lenStart = 0
+    lenRollback := len(eRuntime.rollbackList)
+    for i := lenRollback-1; i >= 0; i -- {
+        if rollback.DaaScoreEnd - eRuntime.rollbackList[i].DaaScoreStart >= lenRollbackListRuntimeMax {
+            lenStart = i
+            break
+        }
+    }
     if lenStart > 0 {
         eRuntime.rollbackList = eRuntime.rollbackList[lenStart:]
     }
@@ -201,7 +235,7 @@ func scan() {
     mtsLoop := time.Now().UnixMilli() - mtss
     slog.Info("explorer.scan", "lenRuntimeVspc", len(eRuntime.vspcList), "lenRuntimeRollback", len(eRuntime.rollbackList), "lenOperation", lenOpData, "mSecondLoop", mtsLoop)
     if (eRuntime.synced) {
-        mtsLoop = 1650 - mtsLoop
+        mtsLoop = 850 - mtsLoop
         if mtsLoop <=0 {
             return
         }
