@@ -76,7 +76,7 @@ go build -o kpexecutor main.go
     "rocksdb": {                              // This part is the local database parameters.
         "path": "./data"                      // db path
     },
-    "testnet": false,                         //true: mainnet  false: testnet
+    "testnet": false,                         //true: testnet  false: mainnet
     "debug": 2                                //log level:  1:Warn  2: Info  3:Debug 
 }
 ```
