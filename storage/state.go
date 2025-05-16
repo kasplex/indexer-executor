@@ -7,6 +7,7 @@ import (
     "time"
     "strings"
     //"log/slog"
+    "math/rand"
     "encoding/json"
     "github.com/gocql/gocql"
     "github.com/tecbot/gorocksdb"
@@ -319,6 +320,9 @@ func SaveOpDataBatchCassa(opDataList []DataOperationType) (int64, error) {
     if err != nil {
         return 0, err
     }
+    rand.Shuffle(len(opDataList), func(i int, j int) {
+        opDataList[i], opDataList[j] = opDataList[j], opDataList[i]
+    })
     _, err = startExecuteBatchCassa(len(opDataList), func(batch *gocql.Batch, i int) (error) {
         tickAffc := strings.Join(opDataList[i].SsInfo.TickAffc, ",")
         addressAffc := strings.Join(opDataList[i].SsInfo.AddressAffc, ",")
