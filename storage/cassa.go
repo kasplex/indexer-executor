@@ -14,8 +14,8 @@ import (
 const numConns = 10
 const inMaxCassa = 10
 const nQueryCassa = 5
-const nBatchMaxCassa = 100
-const mtsDelayExecuteCassa = 10
+const nBatchMaxCassa = 200
+const mtsDelayExecuteCassa = 5
 const mtsDelayQueryCassa = 5
 
 ////////////////////////////////

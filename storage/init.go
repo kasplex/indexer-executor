@@ -4,8 +4,10 @@ package storage
 
 import (
     "log"
+    "time"
     "strings"
     "log/slog"
+    "math/rand"
     "github.com/gocql/gocql"
     "github.com/tecbot/gorocksdb"
     "kasplex-executor/config"
@@ -27,6 +29,7 @@ var sRuntime runtimeType
 
 ////////////////////////////////
 func Init(cfgCassa config.CassaConfig, cfgRocks config.RocksConfig) {
+    rand.Seed(time.Now().UnixNano())
     sRuntime.cfgCassa = cfgCassa
     sRuntime.cfgRocks = cfgRocks
     slog.Info("storage.Init start.")
