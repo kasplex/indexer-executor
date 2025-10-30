@@ -38,7 +38,23 @@ func scan() {
             daaScoreStart = eRuntime.vspcList[0].DaaScore
         }
     }
-    //_, daaScoreStart = checkDaaScoreRange(daaScoreStart)
+	// Get the maximum available daascore from cluster db.
+	_, _, daaScoreAvailable, err := storage.GetRuntimeChainBlockLast()
+    if err != nil {
+        slog.Warn("storage.GetRuntimeChainBlockLast failed, sleep 3s.", "error", err.Error())
+        time.Sleep(3000*time.Millisecond)
+        return
+	}
+	if daaScoreAvailable <= daaScoreStart + uint64(eRuntime.cfg.Hysteresis + lenVspcCheck + 5) {
+        slog.Info("storage.GetRuntimeChainBlockLast empty.", "daaScoreAvailable", daaScoreAvailable)
+        time.Sleep(1550*time.Millisecond)
+        return
+	}
+	// Calculate the maximum available vspc length.
+	lenVspcListMaxAvailable := int(daaScoreAvailable - daaScoreStart - uint64(eRuntime.cfg.Hysteresis) - 5)
+	if lenVspcListMaxAdj > lenVspcListMaxAvailable {
+		lenVspcListMaxAdj = lenVspcListMaxAvailable
+	}
     // Get next vspc data list from cluster db.
     vspcListNext, mtsBatchVspc, err := storage.GetNodeVspcList(daaScoreStart, lenVspcListMaxAdj+5)
     if err != nil {
@@ -48,16 +64,16 @@ func scan() {
     }
     // Ignore the last reserved vspc data if synced, reduce the probability of vspc-reorg.
     lenVspcNext := len(vspcListNext)
-    if (eRuntime.synced) {
-        lenVspcNext -= eRuntime.cfg.Hysteresis
-    }
+    //if (eRuntime.synced) {
+    //    lenVspcNext -= eRuntime.cfg.Hysteresis
+    //}
     if lenVspcNext <= 0 {
         slog.Debug("storage.GetNodeVspcList empty.", "daaScore", daaScoreStart)
         time.Sleep(1550*time.Millisecond)
         return
     }
-    vspcListNext = vspcListNext[:lenVspcNext]
-    slog.Info("storage.GetNodeVspcList", "daaScore", daaScoreStart, "lenBlock/mSecond", strconv.Itoa(lenVspcNext)+"/"+strconv.Itoa(int(mtsBatchVspc)), "lenVspcListMax", lenVspcListMaxAdj, "synced", eRuntime.synced)
+    //vspcListNext = vspcListNext[:lenVspcNext]
+    slog.Info("storage.GetNodeVspcList", "daaScoreAvailable", daaScoreAvailable, "daaScoreStart", daaScoreStart, "lenBlock/mSecond", strconv.Itoa(lenVspcNext)+"/"+strconv.Itoa(int(mtsBatchVspc)), "lenVspcListMax", lenVspcListMaxAdj, "synced", eRuntime.synced)
 
     // Check vspc list if need rollback.
     daaScoreRollback, vspcListNext := checkRollbackNext(eRuntime.vspcList, vspcListNext, daaScoreStart)
@@ -233,7 +249,7 @@ func scan() {
         
     // Additional delay if state synced.
     mtsLoop := time.Now().UnixMilli() - mtss
-    slog.Info("explorer.scan", "lenRuntimeVspc", len(eRuntime.vspcList), "lenRuntimeRollback", len(eRuntime.rollbackList), "lenOperation", lenOpData, "mSecondLoop", mtsLoop)
+    slog.Info("explorer.scan", "lenRuntimeVspc", len(eRuntime.vspcList), "lenRuntimeRollback", len(eRuntime.rollbackList), "lenOperation", lenOpData, "mSecondLoop", mtsLoop, "synced", eRuntime.synced)
     if (eRuntime.synced) {
         mtsLoop = 850 - mtsLoop
         if mtsLoop <=0 {

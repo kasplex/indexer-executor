@@ -2,6 +2,9 @@
 ////////////////////////////////
 package storage
 
+//#cgo CFLAGS: -I${SRCDIR}/rocksdb-6.15.5/include
+//#cgo LDFLAGS: -L${SRCDIR}/rocksdb-6.15.5 -lrocksdb -lstdc++ -lm -lz -lsnappy -lzstd -llz4 -lbz2 -static
+import "C"
 import (
     "log"
     "time"

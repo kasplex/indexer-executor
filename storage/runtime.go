@@ -84,8 +84,7 @@ func SetRuntimeRollbackLast(list []DataRollbackType) (error) {
 
 ////////////////////////////////
 // Get runtime data from table "runtime", in the cluster db.
-func GetRuntimeCassa(key string) (string, string, string, error) {
-    key = keyPrefixRuntimeCassa + key
+func GetRuntimeCassaRaw(key string) (string, string, string, error) {
     row := sRuntime.sessionCassa.Query(cqlnGetRuntime, key)
     defer row.Release()
     var k0, v1, v2, v3 string
@@ -97,6 +96,12 @@ func GetRuntimeCassa(key string) (string, string, string, error) {
         return "", "", "", err
     }
     return v1, v2, v3, nil
+}
+
+////////////////////////////////
+// Get runtime data from table "runtime" with keyPrefixRuntimeCassa, in the cluster db.
+func GetRuntimeCassa(key string) (string, string, string, error) {
+	return GetRuntimeCassaRaw(keyPrefixRuntimeCassa + key)
 }
 
 ////////////////////////////////
@@ -139,6 +144,18 @@ func SetRuntimeSynced(Synced bool, opScore uint64, daaScore uint64) (error) {
 // Set the version.
 func SetRuntimeVersion(version string) (error) {
     return SetRuntimeCassa("VERSION", version, "", "")
+}
+
+////////////////////////////////
+// Get the last updated virtual chain block state.
+func GetRuntimeChainBlockLast() (string, uint64, uint64, error) {
+    hash, blueScore, daaScore, err := GetRuntimeCassaRaw("H_CBLOCK_LAST")
+    if err != nil {
+        return "", 0, 0, err
+    }
+    intBlueScore, _ := strconv.ParseUint(blueScore, 10, 64)
+    intDaaScore, _ := strconv.ParseUint(daaScore, 10, 64)
+    return hash, intBlueScore, intDaaScore, nil
 }
 
 // ...

@@ -22,6 +22,7 @@ var (
     cqlnSetRuntime = "INSERT INTO runtime (key,value1,value2,value3) VALUES (?,?,?,?);"
     ////////////////////////////
     cqlnGetVspcData = "SELECT daascore,hash,txid FROM vspc WHERE daascore IN ({daascoreIn});"
+    cqlnGetVspcData2 = "SELECT daascore,hash,reorg,txid FROM vspc WHERE daascore IN ({daascoreIn});"
     ////////////////////////////
     cqlnGetTransactionData = "SELECT txid,data FROM transaction WHERE txid IN ({txidIn});"
     ////////////////////////////
